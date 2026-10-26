@@ -1,0 +1,376 @@
+{% extends "core/base.html" %}
+
+{% block title %}Colaboradores · DP & Segurança do Trabalho{% endblock %}
+{% block page_title %}Colaboradores{% endblock %}
+{% block page_subtitle %}Gerencie os colaboradores da empresa e seus vínculos{% endblock %}
+
+{% block extra_css %}
+<style>
+    .custom-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+        overflow: hidden;
+    }
+
+    .btn-emerald {
+        background-color: #059669;
+        color: #ffffff;
+        border: none;
+        border-radius: 10px;
+        padding: 0.55rem 1.1rem;
+        font-weight: 600;
+        font-size: 0.875rem;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-emerald:hover {
+        background-color: #047857;
+        color: #ffffff;
+        box-shadow: 0 4px 12px rgba(5, 150, 105, 0.25);
+    }
+
+    .custom-table {
+        margin-bottom: 0;
+    }
+
+    .custom-table thead th {
+        background-color: #f8fafc;
+        color: #64748b;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 1rem 1.5rem;
+    }
+
+    .custom-table tbody td {
+        padding: 1rem 1.5rem;
+        color: #334155;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 0.875rem;
+    }
+
+    .custom-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .custom-table tbody tr:hover {
+        background-color: #f8fafc;
+    }
+
+    .badge-sector {
+        background-color: #f1f5f9;
+        color: #475569;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 0.35em 0.65em;
+        font-weight: 600;
+    }
+
+    .badge-epi-count {
+        background-color: #ecfdf5;
+        color: #059669;
+        border: 1px solid #a7f3d0;
+        border-radius: 20px;
+        padding: 0.35em 0.75em;
+        font-weight: 600;
+    }
+
+    .btn-action-edit {
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        background: #ffffff;
+        color: #64748b;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+    }
+
+    .btn-action-edit:hover {
+        background-color: #f1f5f9;
+        color: #059669;
+        border-color: #cbd5e1;
+    }
+
+    /* Modal Styles */
+    .modal-content {
+        border: 1px solid #e2e8f0;
+        border-radius: 20px;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+
+    .modal-header {
+        border-bottom: 1px solid #f1f5f9;
+        padding: 1.25rem 1.5rem;
+    }
+
+    .modal-footer {
+        border-top: 1px solid #f1f5f9;
+        padding: 1rem 1.5rem;
+    }
+
+    .modal-title-icon {
+        width: 36px;
+        height: 36px;
+        background-color: #ecfdf5;
+        color: #059669;
+        border-radius: 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+    }
+
+    .modal-body input, 
+    .modal-body select {
+        display: block;
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+        line-height: 1.5;
+        color: #334155;
+        background-color: #fff;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    }
+
+    .modal-body input:focus, 
+    .modal-body select:focus {
+        border-color: #059669;
+        outline: 0;
+        box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.15);
+    }
+
+    /* Filtros e Paginação */
+    .filter-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 1rem 1.25rem;
+    }
+
+    .pagination .page-link {
+        color: #475569;
+        border-color: #e2e8f0;
+        border-radius: 8px;
+        margin: 0 2px;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+
+    .pagination .page-item.active .page-link {
+        background-color: #059669;
+        border-color: #059669;
+        color: #ffffff;
+    }
+
+    .pagination .page-link:hover {
+        background-color: #f1f5f9;
+        color: #059669;
+        border-color: #cbd5e1;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0 pb-4">
+    <!-- Cabeçalho -->
+    <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between gap-3 mb-4">
+        <div>
+            <h3 class="fw-bold m-0 fs-4" style="color: var(--text-main);">
+                <i class="fas fa-id-card text-success me-2"></i>Lista de Colaboradores
+            </h3>
+            <p class="text-muted small m-0 mt-1">Visualize, filtre e edite as informações dos colaboradores</p>
+        </div>
+        <button type="button" class="btn-emerald" data-bs-toggle="modal" data-bs-target="#modalColaborador">
+            <i class="fas fa-plus"></i> Novo Colaborador
+        </button>
+    </div>
+
+    <!-- Barra de Filtros -->
+    <div class="filter-card mb-4">
+        <form method="GET" action="{% url 'listar_colaboradores' %}" class="row g-2 align-items-center">
+            <div class="col-12 col-md-5">
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0 text-muted" style="border-color: #cbd5e1; border-radius: 8px 0 0 8px;">
+                        <i class="fas fa-search"></i>
+                    </span>
+                    <input type="text" name="busca" class="form-control border-start-0" placeholder="Buscar por nome..." value="{{ busca }}" style="border-color: #cbd5e1; border-radius: 0 8px 8px 0; font-size: 0.875rem;">
+                </div>
+            </div>
+
+            <div class="col-12 col-md-4">
+                <select name="setor" class="form-select" style="border-color: #cbd5e1; border-radius: 8px; font-size: 0.875rem; color: #334155;">
+                    <option value="">Todos os Setores</option>
+                    {% for s in setores %}
+                        <option value="{{ s.id }}" {% if setor_selecionado == s.id|stringformat:"s" %}selected{% endif %}>
+                            {{ s.nome }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-12 col-md-3 d-flex gap-2">
+                <button type="submit" class="btn btn-emerald w-100 justify-content-center">
+                    <i class="fas fa-filter"></i> Filtrar
+                </button>
+                {% if busca or setor_selecionado %}
+                    <a href="{% url 'listar_colaboradores' %}" class="btn btn-light border text-secondary w-100 d-flex align-items-center justify-content-center" style="border-radius: 8px; font-size: 0.875rem;">
+                        Limpar
+                    </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    <!-- Tabela Principal -->
+    <div class="custom-card">
+        <div class="table-responsive">
+            <table class="table custom-table align-middle">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Setor</th>
+                        <th>EPIs Vinculados</th>
+                        <th class="text-end">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in colaboradores %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="rounded-circle bg-light border d-flex align-items-center justify-content-center text-secondary fw-bold" style="width: 32px; height: 32px; font-size: 0.8rem;">
+                                    {{ c.nome|slice:":1"|upper }}
+                                </div>
+                                <span class="fw-bold text-dark">{{ c.nome }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge-sector">{{ c.setor.nome }}</span>
+                        </td>
+                        <td>
+                            <span class="badge-epi-count">
+                                <i class="fas fa-shield-alt me-1"></i>{{ c.total_epis }}
+                            </span>
+                        </td>
+                        <td class="text-end">
+                            <button type="button" class="btn-action-edit" 
+                                    title="Editar Colaborador"
+                                    onclick="editarColaborador('{{ c.id }}', '{{ c.nome }}', '{{ c.setor.id }}')">
+                                <i class="fas fa-pen small"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center py-5 text-muted">
+                            <i class="fas fa-users-slash fa-2x mb-3 text-slate-300 d-block"></i>
+                            Nenhum colaborador encontrado com os filtros aplicados.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Paginação -->
+        {% if colaboradores.has_other_pages %}
+        <div class="d-flex align-items-center justify-content-between p-3 border-top" style="border-color: #f1f5f9;">
+            <span class="small text-muted">
+                Exibindo {{ colaboradores.start_index }} - {{ colaboradores.end_index }} de {{ colaboradores.paginator.count }} registros
+            </span>
+            <ul class="pagination pagination-sm mb-0">
+                {% if colaboradores.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ colaboradores.previous_page_number }}&busca={{ busca }}&setor={{ setor_selecionado }}">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link"><i class="fas fa-chevron-left"></i></span></li>
+                {% endif %}
+
+                {% for num in colaboradores.paginator.page_range %}
+                    {% if colaboradores.number == num %}
+                        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                    {% elif num > colaboradores.number|add:'-3' and num < colaboradores.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}&busca={{ busca }}&setor={{ setor_selecionado }}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if colaboradores.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ colaboradores.next_page_number }}&busca={{ busca }}&setor={{ setor_selecionado }}">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link"><i class="fas fa-chevron-right"></i></span></li>
+                {% endif %}
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal Novo / Editar Colaborador -->
+<div class="modal fade" id="modalColaborador" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header align-items-center">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="modal-title-icon">
+                        <i class="fas fa-user-plus"></i>
+                    </div>
+                    <h5 class="modal-title fw-bold text-dark mb-0" id="modalColabTitulo">Cadastrar Colaborador</h5>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <form method="POST" id="formColaborador">
+                {% csrf_token %}
+                <input type="hidden" name="colaborador_id" id="colaborador_id">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-secondary">Nome Completo</label>
+                        {{ form.nome }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-secondary">Setor</label>
+                        {{ form.setor }}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-light border fw-semibold text-secondary" data-bs-dismiss="modal" style="border-radius: 8px;">Cancelar</button>
+                    <button type="submit" class="btn btn-sm btn-emerald">Salvar Alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function editarColaborador(id, nome, setorId) {
+    document.getElementById('modalColabTitulo').innerText = 'Editar Colaborador';
+    document.getElementById('colaborador_id').value = id;
+    document.getElementById('id_nome').value = nome;
+    document.getElementById('id_setor').value = setorId;
+    
+    new bootstrap.Modal(document.getElementById('modalColaborador')).show();
+}
+</script>
+{% endblock %}

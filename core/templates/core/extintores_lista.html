@@ -1,0 +1,479 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Extintores — Painel de Segurança{% endblock %}
+{% block header_title %}Gerenciamento de Extintores{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+
+  {# ===== CABEÇALHO DA TELA & AÇÕES PRINCIPAIS ===== #}
+  <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4 pb-3 border-bottom">
+    <div>
+        <h3 class="fw-bold m-0 fs-4" style="color: var(--text-main);">
+            <i class="fas fa-fire-extinguisher text-success me-2"></i>Extintores Cadastrados
+        </h3>
+        <p class="text-muted small m-0 mt-1">Edite ou cadastre as informações dos extintores</p>
+    </div>
+
+    <div class="d-flex align-items-center gap-2">
+        {% if extintores.paginator.count > 0 %}
+          <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-3 fw-semibold small me-1 d-none d-md-inline-block">
+            {{ extintores.paginator.count }} extintor{{ extintores.paginator.count|pluralize:"es" }}
+          </span>
+        {% endif %}
+        
+        <a href="{% url 'cadastrar_extintor' %}" class="btn-sst-primary">
+            <i class="fa-solid fa-plus"></i> Novo Extintor
+        </a>
+    </div>
+  </div>
+
+  <!-- Bloco de Filtros -->
+  <div class="card shadow-sm mb-4 border-0">
+    <div class="card-body bg-light rounded">
+      <form method="get" action="{% url 'listar_extintores' %}" class="row g-3 align-items-end">
+        
+        <!-- Filtro por Número -->
+        <div class="col-md-3">
+          <label for="id_numero" class="form-label small fw-bold text-secondary">Número do Extintor</label>
+          <input 
+            type="number" 
+            name="numero" 
+            id="id_numero" 
+            class="form-control" 
+            placeholder="Ex: 12" 
+            value="{{ numero_filtro }}"
+          >
+        </div>
+
+        <!-- Filtro por Setor -->
+        <div class="col-md-4">
+          <label for="id_setor" class="form-label small fw-bold text-secondary">Setor</label>
+          <select name="setor" id="id_setor" class="form-select">
+            <option value="">Todos os Setores</option>
+            {% for setor in setores %}
+              <option value="{{ setor.id }}" {% if setor_filtro == setor.id|stringformat:"s" %}selected{% endif %}>
+                {{ setor.nome }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Botões de Ação -->
+        <div class="col-md-5 d-flex gap-2">
+          <button type="submit" class="btn btn-primary me-1">
+            <i class="fa-solid fa-magnifying-glass me-1"></i> Filtrar
+          </button>
+          
+          {% if setor_filtro or numero_filtro %}
+            <a href="{% url 'listar_extintores' %}" class="btn btn-outline-secondary">
+              <i class="fa-solid fa-xmark me-1"></i> Limpar
+            </a>
+          {% endif %}
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  {# ===== CARD PRINCIPAL DE LISTAGEM ===== #}
+  <div class="card shadow-sm border-0 rounded-3">
+    
+    {# VISÃO MOBILE: CARDS CLEAN #}
+    <div class="d-md-none p-3">
+      {% for extintor in extintores %}
+        <div class="card mb-3 border border-light-subtle shadow-sm rounded-3">
+          <div class="card-body p-3">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-dark text-white mono">Nº {{ extintor.numero|default:"—" }}</span>
+                <span class="fw-bold text-dark">{{ extintor.setor.nome }}</span>
+              </div>
+              <div>
+                {% if extintor.situacao == "OK" %}
+                  <span class="badge bg-success">OK</span>
+                {% elif extintor.situacao == "PENDENTE" %}
+                  <span class="badge bg-warning text-dark">Pendente</span>
+                {% elif extintor.situacao == "VENCIDO" %}
+                  <span class="badge bg-danger">Vencido</span>
+                {% else %}
+                  <span class="badge bg-secondary">Manutenção</span>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="row g-2 fs-7 text-secondary mb-3">
+              <div class="col-6"><strong>Carga:</strong> {{ extintor.get_carga_display }}</div>
+              <div class="col-6"><strong>Tipo:</strong> {{ extintor.tipo }}</div>
+              <div class="col-12"><strong>Vencimento:</strong> {{ extintor.data_vencimento|date:"d/m/Y" }}</div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+              <div>
+                {% if extintor.imagem %}
+                  <button type="button" class="btn btn-sm btn-light border d-flex align-items-center gap-1 text-primary btn-preview-img" data-img-url="{{ extintor.imagem.url }}" data-extintor-num="{{ extintor.numero }}">
+                    <img src="{{ extintor.imagem.url }}" style="width:22px;height:22px;object-fit:cover;border-radius:3px;">
+                    <span class="small fw-semibold">Ver Foto</span>
+                  </button>
+                {% else %}
+                  <span class="text-muted small fs-7"><i class="fa-regular fa-image me-1"></i> Sem foto</span>
+                {% endif %}
+              </div>
+
+              <button type="button" class="btn btn-graphite btn-sm px-3" data-bs-toggle="modal" data-bs-target="#modalEditarExtintor{{ extintor.id }}">
+                <i class="fa-solid fa-pen-to-square me-1"></i> Editar
+              </button>
+            </div>
+          </div>
+        </div>
+      {% empty %}
+        <div class="text-center py-5 text-muted">
+          <i class="fa-solid fa-fire-extinguisher fs-1 mb-2 text-secondary opacity-50"></i>
+          <p class="mb-0 text-uppercase fw-bold">Nenhum extintor cadastrado</p>
+        </div>
+      {% endfor %}
+    </div>
+
+    {# VISÃO DESKTOP E TABLET: TABELA AMPLA #}
+    <div class="table-responsive d-none d-md-block">
+      <table class="table table-industrial table-hover mb-0 align-middle">
+        <thead>
+          <tr>
+            <th style="width:80px;">Nº</th>
+            <th>Setor</th>
+            <th>Carga</th>
+            <th>Tipo</th>
+            <th>Vencimento</th>
+            <th class="text-center">Situação</th>
+            <th class="text-center">Foto</th>
+            <th class="text-end" style="width: 100px;">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for extintor in extintores %}
+            <tr>
+              <td>
+                <span class="mono fw-bold text-dark fs-6">
+                  {{ extintor.numero|default:"—" }}
+                </span>
+              </td>
+
+              <td class="fw-semibold text-dark">{{ extintor.setor.nome }}</td>
+              <td>{{ extintor.get_carga_display }}</td>
+
+              <td>
+                <span class="badge-industrial-light">
+                  {{ extintor.tipo }}
+                </span>
+              </td>
+
+              <td class="mono small">
+                {{ extintor.data_vencimento|date:"d/m/Y" }}
+              </td>
+
+              <td class="text-center">
+                {% if extintor.situacao == "OK" %}
+                  <span class="badge bg-success px-2 py-1">OK</span>
+                {% elif extintor.situacao == "PENDENTE" %}
+                  <span class="badge bg-warning text-dark px-2 py-1">Pendente</span>
+                {% elif extintor.situacao == "VENCIDO" %}
+                  <span class="badge bg-danger px-2 py-1">Vencido</span>
+                {% else %}
+                  <span class="badge bg-secondary px-2 py-1">Manutenção</span>
+                {% endif %}
+              </td>
+
+              <td class="text-center">
+                {% if extintor.imagem %}
+                  <button type="button" class="btn p-0 border-0 btn-preview-img" data-img-url="{{ extintor.imagem.url }}" data-extintor-num="{{ extintor.numero }}">
+                    <img src="{{ extintor.imagem.url }}" class="img-thumbnail-hover" style="width:36px;height:36px;object-fit:cover;border-radius:6px;cursor:pointer;">
+                  </button>
+                {% else %}
+                  <i class="fa-regular fa-image text-muted opacity-50 fs-5"></i>
+                {% endif %}
+              </td>
+
+              <td class="text-end">
+                <button type="button" 
+                        class="btn btn-outline-secondary btn-sm px-2 py-1" 
+                        data-bs-toggle="modal" 
+                        data-bs-target="#modalEditarExtintor{{ extintor.id }}"
+                        title="Editar Extintor">
+                  <i class="fa-solid fa-pen-to-square me-1"></i> Editar
+                </button>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="8" class="text-center py-5">
+                <div class="text-muted">
+                  <i class="fa-solid fa-fire-extinguisher fs-1 mb-3 text-secondary opacity-50 d-block"></i>
+                  <p class="mb-1 display-font fs-5 text-uppercase">Nenhum extintor cadastrado</p>
+                  <small class="text-secondary">Clique no botão superior para cadastrar um novo extintor.</small>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {# ===== PAGINAÇÃO ===== #}
+    {% if extintores.has_other_pages %}
+      <div class="card-footer bg-white border-top d-flex flex-column flex-sm-row justify-content-between align-items-center gap-2 py-3 px-4">
+        <small class="mono text-muted" style="font-size: 0.75rem;">
+          EXIBINDO {{ extintores.start_index }}-{{ extintores.end_index }} DE {{ extintores.paginator.count }}
+        </small>
+
+        <ul class="pagination pagination-sm mb-0">
+          {% if extintores.has_previous %}
+            <li class="page-item">
+              <a class="page-link text-dark" href="?page={{ extintores.previous_page_number }}{% if setor_atual %}&setor={{ setor_atual }}{% endif %}{% if situacao_atual %}&situacao={{ situacao_atual }}{% endif %}{% if vencimento_atual %}&vencimento={{ vencimento_atual }}{% endif %}{% if vistoria_atual %}&vistoria={{ vistoria_atual }}{% endif %}{% if ordem_atual %}&ordem={{ ordem_atual }}{% endif %}">Anterior</a>
+            </li>
+          {% else %}
+            <li class="page-item disabled"><span class="page-link">Anterior</span></li>
+          {% endif %}
+
+          {% for num in extintores.paginator.page_range %}
+            {% if extintores.number == num %}
+              <li class="page-item active">
+                <span class="page-link" style="background: var(--amber-500); border-color: var(--amber-500); color: var(--graphite-950); font-weight: bold;">{{ num }}</span>
+              </li>
+            {% elif num > extintores.number|add:'-3' and num < extintores.number|add:'3' %}
+              <li class="page-item">
+                <a class="page-link text-dark" href="?page={{ num }}{% if setor_atual %}&setor={{ setor_atual }}{% endif %}{% if situacao_atual %}&situacao={{ situacao_atual }}{% endif %}{% if vencimento_atual %}&vencimento={{ vencimento_atual }}{% endif %}{% if vistoria_atual %}&vistoria={{ vistoria_atual }}{% endif %}{% if ordem_atual %}&ordem={{ ordem_atual }}{% endif %}">{{ num }}</a>
+              </li>
+            {% endif %}
+          {% endfor %}
+
+          {% if extintores.has_next %}
+            <li class="page-item">
+              <a class="page-link text-dark" href="?page={{ extintores.next_page_number }}{% if setor_atual %}&setor={{ setor_atual }}{% endif %}{% if situacao_atual %}&situacao={{ situacao_atual }}{% endif %}{% if vencimento_atual %}&vencimento={{ vencimento_atual }}{% endif %}{% if vistoria_atual %}&vistoria={{ vistoria_atual }}{% endif %}{% if ordem_atual %}&ordem={{ ordem_atual }}{% endif %}">Próximo</a>
+            </li>
+          {% else %}
+            <li class="page-item disabled"><span class="page-link">Próximo</span></li>
+          {% endif %}
+        </ul>
+      </div>
+    {% endif %}
+
+  </div>
+</div>
+
+{# ===== MODAIS DE EDIÇÃO ===== #}
+{% for extintor in extintores %}
+  <div class="modal fade" id="modalEditarExtintor{{ extintor.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        
+        <div class="modal-header">
+          <h5 class="modal-title">Editar Extintor Nº {{ extintor.numero }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        {# FORMULÁRIO PRINCIPAL DE EDIÇÃO #}
+        <form id="formEditarExtintor{{ extintor.id }}" method="post" action="{% url 'listar_extintores' %}" enctype="multipart/form-data">
+          {% csrf_token %}
+          <input type="hidden" name="extintor_id" value="{{ extintor.id }}">
+
+          <div class="modal-body text-start">
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label class="form-label small text-uppercase mono text-secondary fw-semibold">Número</label>
+                <input type="text" name="numero" value="{{ extintor.numero|default:'' }}" class="form-control">
+              </div>
+
+              <div class="col-md-8 mb-3">
+                <label class="form-label small text-uppercase mono text-secondary fw-semibold">Setor</label>
+                <select name="setor" class="form-select">
+                  {% for setor in form.fields.setor.queryset %}
+                    <option value="{{ setor.id }}" {% if setor.id == extintor.setor.id %}selected{% endif %}>
+                      {{ setor.nome }}
+                    </option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label class="form-label small text-uppercase mono text-secondary fw-semibold">Carga</label>
+                <select name="carga" class="form-select">
+                  {% for value, label in extintor.CARGA_CHOICES %}
+                    <option value="{{ value }}" {% if value == extintor.carga %}selected{% endif %}>
+                      {{ label }}
+                    </option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label class="form-label small text-uppercase mono text-secondary fw-semibold">Tipo</label>
+                <select name="tipo" class="form-select">
+                  {% for value, label in extintor.TIPOS_INCENDIO %}
+                    <option value="{{ value }}" {% if value == extintor.tipo %}selected{% endif %}>
+                      {{ label }}
+                    </option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label class="form-label small text-uppercase mono text-secondary fw-semibold">Data da Vistoria</label>
+                <input type="date" name="data_vistoria" value="{{ extintor.data_vistoria|date:'Y-m-d' }}" class="form-control">
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label class="form-label small text-uppercase mono text-secondary fw-semibold">Data de Vencimento</label>
+                <input type="date" name="data_vencimento" value="{{ extintor.data_vencimento|date:'Y-m-d' }}" class="form-control">
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label class="form-label small text-uppercase mono text-secondary fw-semibold">Situação</label>
+                <select name="situacao" class="form-select">
+                  {% for value, label in extintor.STATUS_CHOICES %}
+                    <option value="{{ value }}" {% if value == extintor.situacao %}selected{% endif %}>
+                      {{ label }}
+                    </option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label class="form-label small text-uppercase mono text-secondary fw-semibold">Foto</label>
+                <input type="file" name="imagem" class="form-control" accept="image/*">
+                {% if extintor.imagem %}
+                  <div class="mt-2">
+                    <img src="{{ extintor.imagem.url }}" class="img-thumbnail" style="max-height:80px;">
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </form> {# Fim do formulário de edição #}
+
+        {# FOOTER COM OS DOIS FORMULÁRIOS SEPARADOS #}
+        <div class="modal-footer d-flex justify-content-between py-2 bg-light border-top">
+          {# Formulário 1: Exclusão (Independente) #}
+          <form method="post" action="{% url 'deletar_extintor' extintor.id %}" onsubmit="return confirm('Tem certeza que deseja excluir o Extintor Nº {{ extintor.numero }}?');">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-outline-danger">
+              <i class="fa-solid fa-trash-can me-1"></i> Excluir
+            </button>
+          </form>
+
+          {# Ações da Edição #}
+          <div>
+            <button type="button" class="btn btn-sm btn-outline-secondary me-1" data-bs-dismiss="modal">Cancelar</button>
+            {# O atributo form="..." aciona o envio do formEditarExtintor por fora #}
+            <button type="submit" form="formEditarExtintor{{ extintor.id }}" class="btn btn-sm btn-signal">
+              Salvar Alterações
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+{% endfor %}
+
+{# ===== MODAL DE VISUALIZAÇÃO DE IMAGEM ===== #}
+<div class="modal fade" id="modalVerImagem" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-md">
+    <div class="modal-content bg-dark border-0 shadow-lg">
+      <div class="modal-header border-0 pb-0">
+        <h6 class="modal-title text-white display-font small" id="tituloModalImagem">Visualização da Foto</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <div class="modal-body text-center p-3">
+        <img id="imgModalPreview" src="" class="img-fluid rounded" style="max-height: 75vh; object-fit: contain;">
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const modalImagemElement = document.getElementById('modalVerImagem');
+    const modalImagem = new bootstrap.Modal(modalImagemElement);
+    const imgModalPreview = document.getElementById('imgModalPreview');
+    const tituloModal = document.getElementById('tituloModalImagem');
+
+    document.querySelectorAll('.btn-preview-img').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const url = this.getAttribute('data-img-url');
+        const num = this.getAttribute('data-extintor-num') || '';
+        
+        imgModalPreview.setAttribute('src', url);
+        tituloModal.textContent = num ? `Foto do Extintor Nº ${num}` : 'Foto do Extintor';
+        modalImagem.show();
+      });
+    });
+  });
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .fs-7 { font-size: 0.82rem; }
+
+  .img-thumbnail-hover {
+    transition: transform 0.15s ease-in-out, filter 0.15s ease-in-out;
+  }
+  .img-thumbnail-hover:hover {
+    transform: scale(1.1);
+    filter: brightness(0.9);
+  }
+
+  .table-industrial {
+    border-color: var(--steel-100);
+  }
+  .table-industrial thead th {
+    font-family: var(--font-display);
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: var(--graphite-950);
+    color: var(--steel-300);
+    border-bottom: 2px solid var(--amber-500);
+    padding: 0.85rem 1rem;
+  }
+  .table-industrial tbody td {
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid var(--steel-100);
+  }
+
+  .badge-industrial-light {
+    background: var(--steel-100);
+    color: var(--graphite-700);
+    border: 1px solid var(--steel-300);
+    font-family: var(--font-mono);
+    font-weight: 600;
+    font-size: 0.72rem;
+    padding: 0.2em 0.5em;
+    border-radius: 3px;
+  }
+
+  /* Botão Principal */
+  .btn-sst-primary {
+      background-color: #059669;
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+      padding: 0.5rem 1rem;
+      font-weight: 600;
+      font-size: 0.875rem;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      text-decoration: none;
+  }
+
+  .btn-sst-primary:hover {
+      background-color: #047857;
+      color: #ffffff;
+  }
+</style>
+{% endblock %}

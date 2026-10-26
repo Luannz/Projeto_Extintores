@@ -1,0 +1,265 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Setores — Painel de Segurança e Produção{% endblock %}
+{% block header_title %}Gerenciamento de Setores{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+
+  {# ===== FORMULÁRIO DE NOVO SETOR ===== #}
+  <div class="col-md-4">
+    <div class="card p-3 shadow-sm border-0">
+      <div class="pb-3">
+        <h3 class="fw-bold m-0 fs-4" style="color: var(--text-main);">
+          <i class="fas fa-warehouse text-success me-2"></i>Setores Cadastrados
+        </h3>
+      </div>
+
+      <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label class="form-label small text-uppercase mono text-secondary fw-semibold">
+                Código
+            </label>
+            {{ form.codigo }}
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label small text-uppercase mono text-secondary fw-semibold">
+                Nome do Setor
+            </label>
+            {{ form.nome }}
+        </div>
+
+        <div class="form-check mb-3">
+            {{ form.ativo }}
+            <label class="form-check-label" for="{{ form.ativo.id_for_label }}">
+                Setor Ativo
+            </label>
+        </div>
+        <button type="submit" class="btn btn-signal w-100">
+          <i class="fa-solid fa-plus me-1"></i> Cadastrar Setor
+        </button>
+      </form>
+    </div>
+  </div>
+
+  {# ===== TABELA DE SETORES ===== #}
+  <div class="col-md-8">
+    <div class="card shadow-sm border-0">
+      <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 display-font fw-bold text-uppercase text-dark" style="letter-spacing: 0.05em;">
+          Setores Cadastrados
+        </h5>
+        <span class="badge-industrial-steel">
+          {{ setores.paginator.count|default:setores.count }} setor{{ setores.paginator.count|default:setores.count|pluralize:"es" }}
+        </span>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-industrial table-hover mb-0">
+          <thead>
+            <tr>
+              <th style="width: 90px;">Código</th>
+              <th>Nome do Setor</th>
+              <th class="text-center">Status</th>
+              <th class="text-center">Extintores</th>
+              <th class="text-end" style="width: 100px;">Ação</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for setor in setores %}
+              <tr>
+                <td>
+                    {% if setor.codigo %}
+                        <span class="mono fw-bold text-dark">{{ setor.codigo }}</span>
+                    {% else %}
+                        <span class="text-muted">—</span>
+                    {% endif %}
+                </td>
+                
+                <td>
+                  <span class="fw-semibold text-dark">{{ setor.nome }}</span>
+                </td>
+
+                <td class="text-center">
+                    {% if setor.ativo %}
+                        <span class="badge bg-success">
+                            Ativo
+                        </span>
+                    {% else %}
+                        <span class="badge bg-danger">
+                            Inativo
+                        </span>
+                    {% endif %}
+                </td>
+
+                <td class="text-center">
+                  <span class="badge-industrial-light">
+                    <i class="fa-solid fa-fire-extinguisher me-1"></i>{{ setor.extintores.count }}
+                  </span>
+                </td>
+
+                <td class="text-end">
+                  <button type="button" 
+                          class="btn btn-graphite btn-sm px-2" 
+                          data-bs-toggle="modal" 
+                          data-bs-target="#modalEditarSetor{{ setor.id }}"
+                          title="Editar Setor">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                  </button>
+                </td>
+              </tr>
+
+            {# ===== MODAL DE EDIÇÃO DO SETOR ===== #}
+            <div class="modal fade" id="modalEditarSetor{{ setor.id }}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered modal-sm">
+                <div class="modal-content border-0 shadow">
+                    <div class="modal-header py-2 bg-dark border-bottom" style="border-color: var(--amber-500) !important;">
+                    <h6 class="modal-title display-font fw-bold text-white text-uppercase" style="letter-spacing: 0.05em;">
+                        <i class="fa-solid fa-pen-to-square text-warning me-1"></i> Editar Setor
+                    </h6>
+                    <button type="button" class="btn-close btn-close-white small" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    
+                    <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="setor_id" value="{{ setor.id }}">
+                    
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Código</label>
+                            <input type="text" name="codigo" value="{{ setor.codigo }}" class="form-control">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Nome</label>
+                            <input type="text" name="nome" value="{{ setor.nome }}" class="form-control" required>
+                        </div>
+
+                        <div class="form-check">
+                            {% if setor.total_extintores > 0 %}
+                                <input type="hidden" name="ativo" value="on">
+                                <input class="form-check-input" type="checkbox" checked disabled id="checkAtivo{{ setor.id }}">
+                                <label class="form-check-label text-muted" for="checkAtivo{{ setor.id }}">
+                                    Setor ativo
+                                </label>
+                                <div class="form-text text-danger mt-1" style="font-size: 0.75rem;">
+                                    <i class="fas fa-lock me-1"></i>
+                                    Possui {{ setor.total_extintores }} extintor(es) vinculado(s). Realoque-os antes de desativar.
+                                </div>
+                            {% else %}
+                                <input class="form-check-input" 
+                                        type="checkbox" 
+                                        name="ativo" 
+                                        id="checkAtivo{{ setor.id }}" 
+                                        {% if setor.ativo %}checked{% endif %}>
+                                <label class="form-check-label" for="checkAtivo{{ setor.id }}">
+                                    Setor ativo
+                                </label>
+                            {% endif %}
+                        </div>
+
+                    </div>
+                    <div class="modal-footer py-2 bg-light border-top">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-sm btn-signal">Salvar</button>
+                    </div>
+                    </form>
+                </div>
+                </div>
+            </div>
+            {% empty %}
+              <tr>
+                <td colspan="4" class="text-center py-5">
+                  <div class="text-muted">
+                    <i class="fa-solid fa-sitemap fs-1 mb-3 text-secondary opacity-50 d-block"></i>
+                    <p class="mb-1 display-font fs-5 text-uppercase">NENHUM SETOR CADASTRADO</p>
+                    <small class="text-secondary">Cadastre novos setores no formulário ao lado.</small>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      {# ===== PAGINAÇÃO INDUSTRIAL ===== #}
+      {% if setores.has_other_pages %}
+        <div class="card-footer bg-white border-top d-flex justify-content-between align-items-center py-2">
+          <small class="mono text-muted" style="font-size: 0.75rem;">
+            EXIBINDO {{ setores.start_index }}-{{ setores.end_index }} DE {{ setores.paginator.count }}
+          </small>
+          
+          <ul class="pagination pagination-sm mb-0">
+            {% if setores.has_previous %}
+              <li class="page-item">
+                <a class="page-link text-dark" href="?page={{ setores.previous_page_number }}">Anterior</a>
+              </li>
+            {% else %}
+              <li class="page-item disabled"><span class="page-link">Anterior</span></li>
+            {% endif %}
+
+            {% for num in setores.paginator.page_range %}
+              {% if setores.number == num %}
+                <li class="page-item active"><span class="page-link" style="background: var(--amber-500); border-color: var(--amber-500); color: var(--graphite-950); font-weight: bold;">{{ num }}</span></li>
+              {% elif num > setores.number|add:'-3' and num < setores.number|add:'3' %}
+                <li class="page-item"><a class="page-link text-dark" href="?page={{ num }}">{{ num }}</a></li>
+              {% endif %}
+            {% endfor %}
+
+            {% if setores.has_next %}
+              <li class="page-item">
+                <a class="page-link text-dark" href="?page={{ setores.next_page_number }}">Próximo</a>
+              </li>
+            {% else %}
+              <li class="page-item disabled"><span class="page-link">Próximo</span></li>
+            {% endif %}
+          </ul>
+        </div>
+      {% endif %}
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* Estilos específicos da Tabela Industrial */
+  .table-industrial {
+    border-color: var(--steel-100);
+  }
+  
+  .table-industrial thead th {
+    font-family: var(--font-display);
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: var(--graphite-950);
+    color: var(--steel-300);
+    border-bottom: 2px solid var(--amber-500);
+    padding: 0.75rem 1rem;
+  }
+
+  .table-industrial tbody td {
+    padding: 0.85rem 1rem;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--steel-100);
+  }
+
+  .badge-industrial-light {
+    background: var(--steel-100);
+    color: var(--graphite-700);
+    border: 1px solid var(--steel-300);
+    font-family: var(--font-mono);
+    font-weight: 600;
+    font-size: 0.7rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 0.25em 0.55em;
+    border-radius: 2px;
+  }
+</style>
+{% endblock %}

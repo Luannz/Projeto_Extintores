@@ -1,0 +1,194 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Novo Extintor — Painel de Segurança{% endblock %}
+{% block header_title %}Cadastrar Extintor{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0" style="max-width: 800px;">
+
+  {# ===== CABEÇALHO DA TELA & VOLTAR ===== #}
+  <div class="d-flex align-items-center justify-content-between mb-4 pb-2 border-bottom">
+    <div class="d-flex align-items-center gap-2">
+      <a href="{% url 'listar_extintores' %}" class="btn btn-sm btn-light border text-secondary rounded-3 px-3 fw-medium">
+        <i class="fas fa-arrow-left me-1"></i> Voltar à Lista
+      </a>
+    </div>
+    <span class="badge-industrial-steel">
+      <i class="fa-solid fa-fire-extinguisher text-warning me-1"></i> Novo Cadastro
+    </span>
+  </div>
+
+  {# ===== CARD DO FORMULÁRIO DE CADASTRO ===== #}
+  <div class="card shadow-sm border-0 rounded-3">
+    <div class="card-header bg-dark text-white py-3 border-bottom" style="border-color: var(--amber-500) !important;">
+      <h5 class="display-font mb-0 fw-bold text-uppercase d-flex align-items-center gap-2" style="letter-spacing: 0.05em;">
+        <i class="fa-solid fa-plus text-warning"></i> Informações do Extintor
+      </h5>
+    </div>
+
+    <div class="card-body p-4">
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div class="row g-3">
+          {# Número e Setor #}
+          <div class="col-12 col-md-4">
+            <label class="form-label small text-uppercase mono text-secondary fw-semibold">
+              {{ form.numero.label }} <span class="text-danger">*</span>
+            </label>
+            {{ form.numero }}
+            {% if form.numero.errors %}<div class="text-danger small mt-1">{{ form.numero.errors.0 }}</div>{% endif %}
+          </div>
+
+          <div class="col-12 col-md-8">
+            <label class="form-label small text-uppercase mono text-secondary fw-semibold">
+              {{ form.setor.label }} <span class="text-danger">*</span>
+            </label>
+            {{ form.setor }}
+            {% if form.setor.errors %}<div class="text-danger small mt-1">{{ form.setor.errors.0 }}</div>{% endif %}
+          </div>
+
+          {# Carga e Tipo #}
+          <div class="col-12 col-md-6">
+            <label class="form-label small text-uppercase mono text-secondary fw-semibold">
+              {{ form.carga.label }} <span class="text-danger">*</span>
+            </label>
+            {{ form.carga }}
+            {% if form.carga.errors %}<div class="text-danger small mt-1">{{ form.carga.errors.0 }}</div>{% endif %}
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label class="form-label small text-uppercase mono text-secondary fw-semibold">
+              {{ form.tipo.label }} <span class="text-danger">*</span>
+            </label>
+            {{ form.tipo }}
+            {% if form.tipo.errors %}<div class="text-danger small mt-1">{{ form.tipo.errors.0 }}</div>{% endif %}
+          </div>
+
+          {# Datas de Vistoria e Vencimento #}
+          <div class="col-12 col-md-6">
+            <label class="form-label small text-uppercase mono text-secondary fw-semibold">
+              {{ form.data_vistoria.label }} <span class="text-danger">*</span>
+            </label>
+            {{ form.data_vistoria }}
+            {% if form.data_vistoria.errors %}<div class="text-danger small mt-1">{{ form.data_vistoria.errors.0 }}</div>{% endif %}
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label class="form-label small text-uppercase mono text-secondary fw-semibold">
+              {{ form.data_vencimento.label }} <span class="text-danger">*</span>
+            </label>
+            {{ form.data_vencimento }}
+            {% if form.data_vencimento.errors %}<div class="text-danger small mt-1">{{ form.data_vencimento.errors.0 }}</div>{% endif %}
+          </div>
+
+          {# Situação #}
+          <div class="col-12">
+            <label class="form-label small text-uppercase mono text-secondary fw-semibold">
+              {{ form.situacao.label }} <span class="text-danger">*</span>
+            </label>
+            {{ form.situacao }}
+            {% if form.situacao.errors %}<div class="text-danger small mt-1">{{ form.situacao.errors.0 }}</div>{% endif %}
+          </div>
+
+          {# Upload de Imagem / Captura da Câmera #}
+          <div class="col-12 pt-2">
+            <label class="form-label small text-uppercase mono text-secondary fw-semibold">
+              {{ form.imagem.label|default:"Foto do Equipamento" }}
+            </label>
+
+            {# Campos de Upload Ocultos #}
+            <div class="d-none">
+              {{ form.imagem }}
+            </div>
+            <input type="file" id="cameraInput" accept="image/*" capture="environment" class="d-none">
+
+            {# Botões Visíveis de Seleção/Câmera #}
+            <div class="d-grid gap-2 d-sm-flex mb-2">
+              <button type="button" class="btn btn-outline-dark btn-mobile-action flex-fill py-2" onclick="document.getElementById('cameraInput').click();">
+                <i class="fa-solid fa-camera me-1"></i> Tirar Foto
+              </button>
+
+              <button type="button" class="btn btn-outline-secondary btn-mobile-action flex-fill py-2" onclick="document.getElementById('{{ form.imagem.id_for_label }}').click();">
+                <i class="fa-solid fa-images me-1"></i> Galeria
+              </button>
+            </div>
+
+            {# Caixa de Status / Preview da Foto Selecionada #}
+            <div id="previewNomeArquivo" class="form-text small mono text-success d-none align-items-center gap-2 p-2 bg-light rounded border border-success-subtle">
+              <i class="fa-solid fa-circle-check fs-6"></i>
+              <span id="textoNomeArquivo">Nenhum arquivo selecionado</span>
+            </div>
+
+            {% if form.imagem.errors %}
+              <div class="text-danger small mt-1">{{ form.imagem.errors.0 }}</div>
+            {% endif %}
+          </div>
+        </div>
+
+        {# Botão de Submissão #}
+        <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+          <a href="{% url 'listar_extintores' %}" class="btn btn-light border text-secondary px-4 fw-medium">
+            Cancelar
+          </a>
+          <button type="submit" class="btn btn-signal px-4 py-2 fw-bold text-uppercase">
+            <i class="fa-solid fa-check me-1"></i> Salvar Extintor
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const mainInput = document.getElementById('{{ form.imagem.id_for_label }}');
+  const cameraInput = document.getElementById('cameraInput');
+  const previewBox = document.getElementById('previewNomeArquivo');
+  const textoNome = document.getElementById('textoNomeArquivo');
+
+  // Atualiza a mensagem visual ao escolher uma imagem
+  function atualizarStatusImagem(file, origem) {
+    if (file) {
+      textoNome.textContent = `${origem}: ${file.name}`;
+      previewBox.classList.remove('d-none');
+      previewBox.classList.add('d-flex');
+    }
+  }
+
+  // Captura foto da câmera do dispositivo
+  cameraInput?.addEventListener('change', function(e) {
+    if (e.target.files.length > 0) {
+      const file = e.target.files[0];
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(file);
+      mainInput.files = dataTransfer.files;
+      atualizarStatusImagem(file, 'Foto Capturada');
+    }
+  });
+
+  // Seleciona foto da Galeria
+  mainInput?.addEventListener('change', function(e) {
+    if (e.target.files.length > 0) {
+      const file = e.target.files[0];
+      cameraInput.value = ''; 
+      atualizarStatusImagem(file, 'Galeria');
+    }
+  });
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .btn-mobile-action {
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+
+  .form-control, .form-select {
+    padding: 0.55rem 0.75rem;
+  }
+</style>
+{% endblock %}

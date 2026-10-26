@@ -1,0 +1,519 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Início · DP & Segurança do Trabalho{% endblock %}
+{% block page_title %}Visão Geral{% endblock %}
+{% block page_subtitle %}Bem-vindo ao painel de acompanhamento de DP e SST{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Cards de Estatísticas / Métricas */
+    .stat-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 1.25rem 1.5rem;
+        transition: all 0.25s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 20px -5px rgba(15, 23, 42, 0.08);
+        border-color: #cbd5e1;
+    }
+
+    .stat-card .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.35rem;
+        transition: transform 0.2s ease;
+    }
+
+    .stat-card:hover .stat-icon {
+        transform: scale(1.08);
+    }
+
+    /* Cores dos Ícones de Métrica */
+    .icon-emerald { background-color: #ecfdf5; color: #059669; }
+    .icon-rose { background-color: #ffe4e6; color: #e11d48; }
+    .icon-amber { background-color: #fff7ed; color: #c2410c; }
+    .icon-teal { background-color: #f0fdfa; color: #0d9488; }
+
+    .stat-value {
+        font-size: 1.85rem;
+        font-weight: 700;
+        color: #0f172a;
+        line-height: 1.2;
+        letter-spacing: -0.5px;
+    }
+
+    .stat-label {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* Banner / Divisores de Seções */
+    .section-header-banner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.6rem 1rem;
+        border-radius: 12px;
+        margin-bottom: 1rem;
+        font-weight: 600;
+        font-size: 0.95rem;
+    }
+    .banner-epi { background-color: #f0fdfa; color: #0f766e; border: 1px solid #ccfbf1; }
+    .banner-extintor { background-color: #fff7ed; color: #c2410c; border: 1px solid #ffedd5; }
+
+    /* Card Principal de Boas-Vindas */
+    .welcome-card {
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        border: 1px solid #e2e8f0;
+        border-radius: 20px;
+        padding: 1.75rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+    }
+
+    .user-avatar-badge {
+        width: 52px;
+        height: 52px;
+        border-radius: 14px;
+        background: linear-gradient(135deg, #0f766e 0%, #0d9488 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.4rem;
+        font-weight: 700;
+        box-shadow: 0 4px 12px rgba(15, 118, 110, 0.25);
+    }
+
+    .quick-action-btn {
+        border: 1px solid #e2e8f0;
+        background: #ffffff;
+        color: #334155;
+        border-radius: 10px;
+        padding: 0.6rem 1rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+    }
+
+    .quick-action-btn:hover {
+        background: #f1f5f9;
+        color: #0f766e;
+        border-color: #cbd5e1;
+    }
+
+    /* Estilos das Listas de Alertas */
+    .alert-card {
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        background: #ffffff;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .alert-card-header {
+        padding: 1.25rem 1.25rem 0.75rem 1.25rem;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .alert-item-link {
+        text-decoration: none;
+        transition: all 0.2s ease;
+        border: 1px solid #f1f5f9;
+        border-radius: 12px;
+        padding: 0.75rem 1rem;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background-color: #fafafa;
+    }
+
+    .alert-item-link:hover {
+        background-color: #f8fafc;
+        border-color: #cbd5e1;
+        transform: translateX(3px);
+    }
+
+    /* Variação visual específica para extintores nos itens */
+    .alert-item-link.extintor-item:hover {
+        border-color: #fdba74;
+        background-color: #fff8f6;
+    }
+
+    /* Variações de hover no CSS */
+    .alert-item-link.epi-item:hover {
+        border-color: #fdba74;
+        background-color: #fff8f6;
+    }
+
+    .font-mono-date {
+        font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        font-size: 0.8rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Row 1: Cards de Métricas Principais -->
+<div class="row g-3 mb-4">
+    
+    <!-- Colaboradores Ativos -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <span class="stat-label">Colaboradores</span>
+                <div class="stat-icon icon-emerald">
+                    <i class="fas fa-id-card"></i>
+                </div>
+            </div>
+            <div class="d-flex align-items-baseline justify-content-between">
+                <p class="stat-value mb-0">{{ colaboradores|length|default:"0" }}</p>
+                <small class="text-success fw-semibold"><i class="fas fa-check-circle me-1"></i>Ativos</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pendências de EPIs -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <span class="stat-label">Alertas de EPI</span>
+                <div class="stat-icon icon-rose">
+                    <i class="fas fa-hard-hat"></i>
+                </div>
+            </div>
+            <div class="d-flex align-items-baseline justify-content-between">
+                <p class="stat-value mb-0">{{ total_pendencias_epi|default:"0" }}</p>
+                <small class="{% if total_pendencias_epi > 0 %}text-danger{% else %}text-success{% endif %} fw-semibold">
+                    <i class="fas {% if total_pendencias_epi > 0 %}fa-exclamation-triangle{% else %}fa-check-circle{% endif %} me-1"></i>
+                    {% if total_pendencias_epi > 0 %}Pendente{% else %}Em dia{% endif %}
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pendências de Extintores -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <span class="stat-label">Alertas de Extintor</span>
+                <div class="stat-icon icon-amber">
+                    <i class="fas fa-fire-extinguisher"></i>
+                </div>
+            </div>
+            <div class="d-flex align-items-baseline justify-content-between">
+                <p class="stat-value mb-0">{{ total_pendencias_extintor|default:"0" }}</p>
+                <small class="{% if total_pendencias_extintor > 0 %}text-warning-emphasis{% else %}text-success{% endif %} fw-semibold">
+                    <i class="fas {% if total_pendencias_extintor > 0 %}fa-exclamation-circle{% else %}fa-check-circle{% endif %} me-1"></i>
+                    {% if total_pendencias_extintor > 0 %}Atenção{% else %}Em dia{% endif %}
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Setores Mapeados -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <span class="stat-label">Setores</span>
+                <div class="stat-icon icon-teal">
+                    <i class="fas fa-warehouse"></i>
+                </div>
+            </div>
+            <div class="d-flex align-items-baseline justify-content-between">
+                <p class="stat-value mb-0">{{ setores|length|default:"0" }}</p>
+                <small class="text-muted fw-normal">Cadastrados</small>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+<!-- ================= SEÇÃO 1: EXTINTORES ================= -->
+<div class="section-header-banner banner-extintor">
+    <span><i class="fas fa-fire-extinguisher me-2"></i>Gestão e Vencimento de Extintores</span>
+    <a href="{% url 'inspecao_extintores' %}" class="btn btn-sm btn-outline-danger bg-white text-danger border-danger-subtle fw-bold">
+        Gerenciar Todos os Extintores <i class="fas fa-arrow-right ms-1"></i>
+    </a>
+</div>
+
+<div class="row g-4 mb-5">
+    
+    <!-- Extintores Vencidos -->
+    <div class="col-12 col-lg-6">
+        <div class="alert-card border-danger-subtle overflow-hidden">
+            <div class="alert-card-header d-flex align-items-center justify-content-between bg-danger-subtle bg-opacity-25">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-danger text-white p-2 rounded-3">
+                        <i class="fas fa-fire-extinguisher fa-lg"></i>
+                    </span>
+                    <div>
+                        <h6 class="fw-bold m-0 text-dark">Extintores Vencidos</h6>
+                        <small class="text-muted fs-7">Recarga / Vistoria Vencida</small>
+                    </div>
+                </div>
+                <span class="badge bg-danger rounded-pill px-3 py-1 fs-7 fw-semibold">
+                    {{ extintores_vencidos|length }}
+                </span>
+            </div>
+
+            <div class="p-3 flex-grow-1">
+                {% for ext in extintores_vencidos %}
+                    <a href="{% url 'inspecao_extintores' %}?vencimento=vencidos" class="alert-item-link extintor-item">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="rounded-circle bg-danger-subtle text-danger d-flex align-items-center justify-content-center" style="width:38px; height:38px; flex-shrink:0;">
+                                <i class="fas fa-fire-extinguisher fs-6"></i>
+                            </div>
+                            <div>
+                                <strong class="d-block text-dark small mb-0">
+                                    Extintor Nº {{ ext.numero }} 
+                                    <span class="badge bg-light text-dark border ms-1">{{ ext.tipo|default:"N/A" }}</span>
+                                </strong>
+                                <span class="text-muted fs-7"><i class="fas fa-map-marker-alt me-1 text-danger"></i>Setor: <strong>{{ ext.setor.nome }}</strong></span>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-danger text-white font-mono-date">
+                                Venceu {{ ext.data_vencimento|date:"d/m/Y" }}
+                            </span>
+                        </div>
+                    </a>
+                {% empty %}
+                    <div class="text-center py-4 text-muted">
+                        <i class="fas fa-check-circle text-success fa-2x mb-2 d-block"></i>
+                        <span class="small fw-medium">Nenhum extintor vencido.</span>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Extintores Próximos de Vencer (Próximos 30 dias) -->
+    <div class="col-12 col-lg-6">
+        <div class="alert-card border-warning-subtle overflow-hidden">
+            <div class="alert-card-header d-flex align-items-center justify-content-between bg-warning-subtle bg-opacity-25">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-warning text-dark p-2 rounded-3">
+                        <i class="fas fa-clock fa-lg"></i>
+                    </span>
+                    <div>
+                        <h6 class="fw-bold m-0 text-dark">Extintores a Vencer</h6>
+                        <small class="text-muted fs-7">Vencimento nos próximos 30 dias</small>
+                    </div>
+                </div>
+                <span class="badge bg-warning text-dark rounded-pill px-3 py-1 fs-7 fw-semibold">
+                    {{ extintores_alerta|length }}
+                </span>
+            </div>
+
+            <div class="p-3 flex-grow-1">
+                {% for ext in extintores_alerta %}
+                    <a href="{% url 'inspecao_extintores' %}?vencimento=30" class="alert-item-link extintor-item">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="rounded-circle bg-warning-subtle text-warning-emphasis d-flex align-items-center justify-content-center" style="width:38px; height:38px; flex-shrink:0;">
+                                <i class="fas fa-exclamation-triangle fs-6"></i>
+                            </div>
+                            <div>
+                                <strong class="d-block text-dark small mb-0">
+                                    Extintor Nº {{ ext.numero }} 
+                                    <span class="badge bg-light text-dark border ms-1">{{ ext.tipo|default:"N/A" }}</span>
+                                </strong>
+                                <span class="text-muted fs-7"><i class="fas fa-map-marker-alt me-1 text-warning-emphasis"></i>Setor: <strong>{{ ext.setor.nome }}</strong></span>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-warning text-dark font-mono-date">
+                                Vence {{ ext.data_vencimento|date:"d/m/Y" }}
+                            </span>
+                        </div>
+                    </a>
+                {% empty %}
+                    <div class="text-center py-4 text-muted">
+                        <i class="fas fa-shield-check text-success fa-2x mb-2 d-block"></i>
+                        <span class="small fw-medium">Nenhum extintor prestes a vencer.</span>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+<!-- ================= SEÇÃO 2: EQUIPAMENTOS DE PROTEÇÃO INDIVIDUAL (EPIs) ================= -->
+<div class="section-header-banner banner-epi">
+    <span><i class="fas fa-hard-hat me-2"></i>Controle de Equipamentos de Proteção Individual (EPIs)</span>
+    <a href="{% url 'status_epis' %}" class="btn btn-sm btn-outline-teal bg-white text-teal-700 border-teal-subtle fw-bold" style="color: #0f766e;">
+        Ver Fichas de EPIs <i class="fas fa-arrow-right ms-1"></i>
+    </a>
+</div>
+
+<div class="row g-4 mb-4">
+    
+    <!-- Painel de EPIs Vencidos -->
+    <div class="col-12 col-lg-6">
+        <div class="alert-card border-danger-subtle overflow-hidden">
+            <div class="alert-card-header d-flex align-items-center justify-content-between bg-danger-subtle bg-opacity-25">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-danger text-white p-2 rounded-3">
+                        <i class="fas fa-exclamation-circle fa-lg"></i>
+                    </span>
+                    <div>
+                        <h6 class="fw-bold m-0 text-dark">EPIs Vencidos</h6>
+                        <small class="text-muted fs-7">Substituição imediata necessária</small>
+                    </div>
+                </div>
+                <span class="badge bg-danger rounded-pill px-3 py-1 fs-7 fw-semibold">
+                    {{ epis_vencidos|length }}
+                </span>
+            </div>
+
+            <div class="p-3 flex-grow-1">
+                {% for r in epis_vencidos %}
+                    <a href="{% url 'ficha_colaborador_epis' r.colaborador.id %}" class="alert-item-link epi-item">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="rounded-circle bg-danger-subtle text-danger d-flex align-items-center justify-content-center" style="width:38px; height:38px; flex-shrink:0;">
+                                <i class="fas fa-user-shield fs-6"></i>
+                            </div>
+                            <div>
+                                <strong class="d-block text-dark small mb-0">{{ r.colaborador.nome }}</strong>
+                                <span class="text-muted fs-7"><i class="fas fa-hard-hat me-1 text-danger"></i>{{ r.epi.nome }} · <span class="text-slate-500">{{ r.colaborador.setor.nome }}</span></span>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-danger text-white font-mono-date">
+                                Venceu {{ r.data_proxima_troca|date:"d/m/Y" }}
+                            </span>
+                        </div>
+                    </a>
+                {% empty %}
+                    <div class="text-center py-4 text-muted">
+                        <i class="fas fa-check-circle text-success fa-2x mb-2 d-block"></i>
+                        <span class="small fw-medium">Nenhum EPI vencido no momento.</span>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Painel de EPIs Próximos de Vencer (Próximos 7 dias) -->
+    <div class="col-12 col-lg-6">
+        <div class="alert-card border-warning-subtle overflow-hidden">
+            <div class="alert-card-header d-flex align-items-center justify-content-between bg-warning-subtle bg-opacity-25">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-warning text-dark p-2 rounded-3">
+                        <i class="fas fa-clock fa-lg"></i>
+                    </span>
+                    <div>
+                        <h6 class="fw-bold m-0 text-dark">EPIs Próximos do Vencimento</h6>
+                        <small class="text-muted fs-7">Trocas previstas nos próximos 7 dias</small>
+                    </div>
+                </div>
+                <span class="badge bg-warning text-dark rounded-pill px-3 py-1 fs-7 fw-semibold">
+                    {{ epis_alerta|length }}
+                </span>
+            </div>
+
+            <div class="p-3 flex-grow-1">
+                {% for r in epis_alerta %}
+                    <a href="{% url 'ficha_colaborador_epis' r.colaborador.id %}" class="alert-item-link epi-item">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="rounded-circle bg-warning-subtle text-warning-emphasis d-flex align-items-center justify-content-center" style="width:38px; height:38px; flex-shrink:0;">
+                                <i class="fas fa-calendar-alt fs-6"></i>
+                            </div>
+                            <div>
+                                <strong class="d-block text-dark small mb-0">{{ r.colaborador.nome }}</strong>
+                                <span class="text-muted fs-7"><i class="fas fa-hard-hat me-1 text-warning-emphasis"></i>{{ r.epi.nome }} · <span class="text-slate-500">{{ r.colaborador.setor.nome }}</span></span>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-warning text-dark font-mono-date">
+                                Troca {{ r.data_proxima_troca|date:"d/m/Y" }}
+                            </span>
+                        </div>
+                    </a>
+                {% empty %}
+                    <div class="text-center py-4 text-muted">
+                        <i class="fas fa-shield-check text-teal-600 fa-2x mb-2 d-block" style="color: #0f766e;"></i>
+                        <span class="small fw-medium">Nenhum EPI prestes a vencer nos próximos 7 dias.</span>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Row 3: Card de Boas-Vindas e Ações Rápidas -->
+<div class="row">
+    <div class="col-12">
+        <div class="welcome-card">
+            <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3">
+                
+                <div class="d-flex align-items-center gap-3">
+                    <div class="user-avatar-badge">
+                        <i class="fas fa-user-shield"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold text-dark mb-1">
+                            Olá, {{ request.user.get_full_name|default:request.user.username }}!
+                        </h5>
+                        <p class="text-muted mb-0" style="font-size: 0.9rem;">
+                            Setor: <span class="badge bg-light text-dark border font-mono ms-1">{{ request.user.setor|default:"Segurança do Trabalho" }}</span>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="{% url 'cadastro' %}" class="quick-action-btn">
+                        <i class="fas fa-user-plus text-primary"></i> Cadastro Usuário
+                    </a>
+                    <a href="{% url 'inspecao_extintores' %}" class="quick-action-btn">
+                        <i class="fas fa-fire-extinguisher text-danger"></i> Extintores
+                    </a>
+                    <a href="{% url 'status_epis' %}" class="quick-action-btn">
+                        <i class="fas fa-hard-hat text-teal-600" style="color: #0f766e;"></i> Fichas de EPI
+                    </a>
+                    <a href="{% url 'listar_colaboradores' %}" class="quick-action-btn">
+                        <i class="fas fa-id-card text-teal-600" style="color: #0f766e;"></i> Gerenciar Colaboradores
+                    </a>
+                
+                </div>
+
+            </div>
+
+            <hr class="my-3" style="border-color: #e2e8f0;">
+
+            <div class="row text-muted" style="font-size: 0.85rem;">
+                <div class="col-md-12">
+                    <p class="mb-0">
+                        <i class="fas fa-info-circle me-1" style="color: #0f766e;"></i>
+                        <strong>Como interagir com as listas:</strong> Clique no item de um <strong>EPI</strong> para ir direto à ficha do colaborador correspondente. Para os <strong>Extintores</strong>, o clique direciona você à tela de vistorias já filtrada pelo alerta correspondente.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

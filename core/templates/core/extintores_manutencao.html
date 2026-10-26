@@ -1,0 +1,511 @@
+{% extends "core/base.html" %}
+
+{% block extra_css %}
+<style>
+    /* Badges personalizadas no padrão do tema */
+    .badge-status {
+        font-weight: 600;
+        font-size: 0.75rem;
+        padding: 0.35rem 0.65rem;
+        border-radius: 6px;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+    .badge-ok { background-color: #d1fae5; color: #065f46; }
+    .badge-pendente { background-color: #fef3c7; color: #92400e; }
+    .badge-vencido { background-color: #fee2e2; color: #991b1b; }
+    .badge-manutencao { background-color: #f1f5f9; color: #475569; }
+
+    /* Efeito de interatividade para colunas editáveis no Desktop */
+    .editable-cell {
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border-radius: 6px;
+        padding: 0.25rem 0.5rem;
+    }
+    .editable-cell:hover {
+        background-color: var(--primary-light, #e0f2fe);
+        color: var(--sidebar-bg-start, #0f172a);
+    }
+    .editable-cell .edit-icon {
+        opacity: 0;
+        transition: opacity 0.2s ease;
+        font-size: 0.8rem;
+    }
+    .editable-cell:hover .edit-icon {
+        opacity: 1;
+    }
+
+    /* Cabeçalho da Tabela */
+    .table-custom-header {
+        background-color: #f8fafc;
+        color: var(--text-muted);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 700;
+        border-bottom: 2px solid var(--card-border, #e2e8f0);
+    }
+
+    /* Ícone de foto interativo */
+    .btn-foto {
+        cursor: pointer;
+        transition: transform 0.2s ease, color 0.2s ease;
+        color: #065f46;
+    }
+    .btn-foto:hover {
+        transform: scale(1.15);
+        color: var(--primary-color, #065f468c) !important;
+    }
+
+    /* Estilização para os Cards Mobile */
+    .extintor-card {
+        border: 1px solid var(--card-border, #e2e8f0);
+        border-radius: 12px;
+        background: #fff;
+        transition: box-shadow 0.2s ease;
+    }
+    .extintor-card:active {
+        background-color: #f8fafc;
+    }
+    .action-badge-btn {
+        cursor: pointer;
+        user-select: none;
+        transition: opacity 0.15s ease;
+    }
+    .action-badge-btn:active {
+        opacity: 0.7;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0 pb-4">
+    
+    <!-- Cabeçalho Principal -->
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <div>
+            <h3 class="fw-bold m-0 fs-4 fs-md-3" style="color: var(--text-main);">
+                <i class="fas fa-fire-extinguisher text-success me-2"></i>Inspeção de Extintores
+            </h3>
+            <p class="text-muted small m-0 mt-1">Acompanhe a situação e registre vistorias</p>
+        </div>
+    </div>
+
+    <!-- Filtros de Busca -->
+    <div class="card mb-3 border-0 shadow-sm">
+        <div class="card-body p-3">
+            <!-- Botão para alternar exibição de filtros no Mobile -->
+            <button class="btn btn-sm btn-outline-secondary w-100 d-md-none d-flex justify-content-between align-items-center mb-2" 
+                    type="button" 
+                    data-bs-toggle="collapse" 
+                    data-bs-target="#collapseFiltros" 
+                    aria-expanded="false">
+                <span><i class="fas fa-filter me-2"></i>Filtrar Lista</span>
+                <i class="fas fa-chevron-down"></i>
+            </button>
+
+            <!-- Container dos Filtros -->
+            <div class="collapse d-md-block" id="collapseFiltros">
+                <form method="GET" action="{% url 'inspecao_extintores' %}" class="row g-2 g-md-3">
+                    
+                    <div class="col-12 col-sm-6 col-lg-3">
+                        <label class="form-label small fw-semibold text-muted mb-1">Setor</label>
+                        <select name="setor" class="form-select form-select-sm" onchange="this.form.submit()">
+                            <option value="">Todos os Setores</option>
+                            {% for s in setores %}
+                                <option value="{{ s.id }}" {% if setor_atual == s.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ s.nome }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="col-12 col-sm-6 col-lg-3">
+                        <label class="form-label small fw-semibold text-muted mb-1">Situação</label>
+                        <select name="situacao" class="form-select form-select-sm" onchange="this.form.submit()">
+                            <option value="">Todas</option>
+                            <option value="OK" {% if situacao_atual == 'OK' %}selected{% endif %}>Em Dia / Regular</option>
+                            <option value="PENDENTE" {% if situacao_atual == 'PENDENTE' %}selected{% endif %}>Necessita Inspeção</option>
+                            <option value="VENCIDO" {% if situacao_atual == 'VENCIDO' %}selected{% endif %}>Vencido</option>
+                            <option value="MANUTENCAO" {% if situacao_atual == 'MANUTENCAO' %}selected{% endif %}>Em Manutenção</option>
+                        </select>
+                    </div>
+
+                    <div class="col-12 col-sm-6 col-lg-2">
+                        <label class="form-label small fw-semibold text-muted mb-1">Vencimento Carga</label>
+                        <select name="vencimento" class="form-select form-select-sm" onchange="this.form.submit()">
+                            <option value="">Todos</option>
+                            <option value="vencidos" {% if vencimento_atual == 'vencidos' %}selected{% endif %}>⚠️ Vencidos</option>
+                            <option value="30" {% if vencimento_atual == '30' %}selected{% endif %}>Vencem em 30 dias</option>
+                            <option value="60" {% if vencimento_atual == '60' %}selected{% endif %}>Vencem em 60 dias</option>
+                            <option value="90" {% if vencimento_atual == '90' %}selected{% endif %}>Vencem em 90 dias</option>
+                            <option value="em_dia" {% if vencimento_atual == 'em_dia' %}selected{% endif %}>Em dia</option>
+                        </select>
+                    </div>
+
+                    <div class="col-12 col-sm-6 col-lg-2">
+                        <label class="form-label small fw-semibold text-muted mb-1">Última Vistoria</label>
+                        <select name="vistoria" class="form-select form-select-sm" onchange="this.form.submit()">
+                            <option value="">Qualquer data</option>
+                            <option value="30" {% if vistoria_atual == '30' %}selected{% endif %}>Há mais de 30 dias</option>
+                            <option value="60" {% if vistoria_atual == '60' %}selected{% endif %}>Há mais de 60 dias</option>
+                            <option value="90" {% if vistoria_atual == '90' %}selected{% endif %}>Há mais de 90 dias</option>
+                        </select>
+                    </div>
+
+                    <div class="col-12 col-lg-2 d-flex align-items-end mt-2 mt-lg-0">
+                        <a href="{% url 'inspecao_extintores' %}" class="btn btn-sm btn-light border text-muted w-100 fw-semibold">
+                            <i class="fas fa-eraser me-1"></i> Limpar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- VISUALIZAÇÃO MOBILE (Cards em telas < md) -->
+    <div class="d-block d-md-none">
+        {% for e in extintores %}
+        <div class="extintor-card p-3 mb-3 shadow-sm">
+            <!-- Linha Superior: Número, Foto e Status -->
+            <div class="d-flex justify-content-between align-items-start mb-2 pb-2 border-bottom">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="fs-5 fw-bold text-dark">#{{ e.numero }}</span>
+                    {% if e.imagem %}
+                        <button type="button" class="btn btn-sm btn-light p-1 text-success border-0" 
+                                onclick="abrirModalImagem('{{ e.imagem.url }}', '{{ e.numero }}')">
+                            <i class="fas fa-camera fa-lg btn-foto"></i>
+                        </button>
+                    {% else %}
+                        <i class="fas fa-camera text-muted opacity-25"></i>
+                    {% endif %}
+                </div>
+                <!-- Badge de Situação Clicável para Edição rápida -->
+                <div class="action-badge-btn" onclick="abrirModalEdicao('{{ e.id }}', '{{ e.numero }}', '{{ e.data_vistoria|date:'Y-m-d' }}', '{{ e.situacao }}', '{{ e.data_vencimento|date:'Y-m-d' }}')">
+                    {% if e.situacao == 'OK' %}
+                        <span class="badge badge-status badge-ok"><i class="fas fa-circle-check"></i> Em Dia <i class="fas fa-pen ms-1 opacity-50"></i></span>
+                    {% elif e.situacao == 'PENDENTE' %}
+                        <span class="badge badge-status badge-pendente"><i class="fas fa-clock"></i> Pendente <i class="fas fa-pen ms-1 opacity-50"></i></span>
+                    {% elif e.situacao == 'VENCIDO' %}
+                        <span class="badge badge-status badge-vencido"><i class="fas fa-circle-xmark"></i> Vencido <i class="fas fa-pen ms-1 opacity-50"></i></span>
+                    {% elif e.situacao == 'MANUTENCAO' %}
+                        <span class="badge badge-status badge-manutencao"><i class="fas fa-wrench"></i> Manutenção <i class="fas fa-pen ms-1 opacity-50"></i></span>
+                    {% else %}
+                        <span class="badge badge-status badge-manutencao">{{ e.get_situacao_display|default:e.situacao }} <i class="fas fa-pen ms-1 opacity-50"></i></span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Informações do Extintor -->
+            <div class="mb-3">
+                <div class="fw-bold text-dark mb-1"><i class="fas fa-map-marker-alt text-secondary me-1"></i> {{ e.setor.nome }}</div>
+                <div class="small text-muted">
+                    <span><strong>Tipo:</strong> {{ e.get_tipo_display }}</span> &bull; 
+                    <span><strong>Carga:</strong> {{ e.get_carga_display }}</span>
+                </div>
+            </div>
+
+            <!-- Botões de Ação/Edição em Bloco -->
+            <div class="row g-2 pt-2 border-top">
+                <div class="col-6">
+                    <button type="button" class="btn btn-sm btn-light border w-100 text-start px-2 py-1"
+                            onclick="abrirModalEdicao('{{ e.id }}', '{{ e.numero }}', '{{ e.data_vistoria|date:'Y-m-d' }}', '{{ e.situacao }}', '{{ e.data_vencimento|date:'Y-m-d' }}')">
+                        <span class="d-block text-muted" style="font-size: 0.65rem;">VENCIMENTO</span>
+                        <span class="fw-semibold text-dark" style="font-size: 0.75rem;">
+                            {% if e.data_vencimento < hoje %}
+                                <span class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{ e.data_vencimento|date:"d/m/Y" }}</span>
+                            {% else %}
+                                <span>{{ e.data_vencimento|date:"d/m/Y" }}</span>
+                            {% endif %}
+                        </span>
+                    </button>
+                </div>
+                <div class="col-6">
+                    <button type="button" class="btn btn-sm btn-light border w-100 text-start px-2 py-1"
+                            onclick="abrirModalEdicao('{{ e.id }}', '{{ e.numero }}', '{{ e.data_vistoria|date:'Y-m-d' }}', '{{ e.situacao }}', '{{ e.data_vencimento|date:'Y-m-d' }}')">
+                        <span class="d-block text-muted" style="font-size: 0.65rem;">ÚLTIMA VISTORIA</span>
+                        <span class="fw-semibold text-dark" style="font-size: 0.75rem;">
+                            {{ e.data_vistoria|date:"d/m/Y"|default:"Não registrada" }}
+                        </span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="card p-4 text-center text-muted">
+            <i class="fas fa-search fa-2x mb-2 text-secondary opacity-50"></i>
+            <p class="m-0 fw-medium">Nenhum extintor encontrado.</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- VISUALIZAÇÃO DESKTOP (Tabela em telas >= md) -->
+    <div class="card overflow-hidden d-none d-md-block shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr class="table-custom-header">
+                        <th class="ps-4">Nº</th>
+                        <th>Setor / Localização</th>
+                        <th>Carga</th>
+                        <th>Tipo</th>
+                        <th>Vencimento</th>
+                        <th>Última Vistoria <i class="fas fa-info-circle text-muted ms-1" title="Clique para atualizar"></i></th>
+                        <th class="pe-4">Situação <i class="fas fa-info-circle text-muted ms-1" title="Clique para atualizar"></i></th>
+                    </tr>
+                </thead>
+                <tbody class="border-top-0">
+                    {% for e in extintores %}
+                    <tr>
+                        <td class="ps-4 fw-bold text-dark">
+                            <div class="d-flex align-items-center gap-2">
+                                <span>#{{ e.numero }}</span>
+                                {% if e.imagem %}
+                                    <i class="fas fa-camera text-ok btn-foto" 
+                                       title="Ver Foto do Extintor" 
+                                       onclick="abrirModalImagem('{{ e.imagem.url }}', '{{ e.numero }}')"></i>
+                                {% else %}
+                                    <i class="fas fa-camera text-muted opacity-25" title="Sem foto disponível"></i>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="fw-semibold text-dark">{{ e.setor.nome }}</div>
+                        </td>
+                        <td>{{ e.get_carga_display }}</td>
+                        <td>{{ e.get_tipo_display }}</td>
+                        
+                        <td onclick="abrirModalEdicao('{{ e.id }}', '{{ e.numero }}', '{{ e.data_vistoria|date:'Y-m-d' }}', '{{ e.situacao }}', '{{ e.data_vencimento|date:'Y-m-d' }}')">
+                            <div class="editable-cell d-inline-flex align-items-center gap-2">
+                                {% if e.data_vencimento < hoje %}
+                                    <span class="badge badge-status badge-vencido">
+                                        <i class="fas fa-triangle-exclamation"></i> {{ e.data_vencimento|date:"d/m/Y" }}
+                                    </span>
+                                {% else %}
+                                    <span class="badge badge-status badge-ok">
+                                        <i class="fas fa-calendar-check"></i> {{ e.data_vencimento|date:"d/m/Y" }}
+                                    </span>
+                                {% endif %}
+                                <i class="fas fa-pen-to-square edit-icon text-success"></i>
+                            </div>
+                        </td>
+
+                        <td onclick="abrirModalEdicao('{{ e.id }}', '{{ e.numero }}', '{{ e.data_vistoria|date:'Y-m-d' }}', '{{ e.situacao }}', '{{ e.data_vencimento|date:'Y-m-d' }}')">
+                            <div class="editable-cell d-inline-flex align-items-center gap-2">
+                                <span class="fw-medium">
+                                    {{ e.data_vistoria|date:"d/m/Y"|default:"Não registrada" }}
+                                </span>
+                                <i class="fas fa-pen-to-square edit-icon text-success"></i>
+                            </div>
+                        </td>
+
+                        <td class="pe-4" onclick="abrirModalEdicao('{{ e.id }}', '{{ e.numero }}', '{{ e.data_vistoria|date:'Y-m-d' }}', '{{ e.situacao }}', '{{ e.data_vencimento|date:'Y-m-d' }}')">
+                            <div class="editable-cell d-inline-flex align-items-center gap-2">
+                                {% if e.situacao == 'OK' %}
+                                    <span class="badge badge-status badge-ok"><i class="fas fa-circle-check"></i> Em Dia / Regular</span>
+                                {% elif e.situacao == 'PENDENTE' %}
+                                    <span class="badge badge-status badge-pendente"><i class="fas fa-clock"></i> Necessita Inspeção</span>
+                                {% elif e.situacao == 'VENCIDO' %}
+                                    <span class="badge badge-status badge-vencido"><i class="fas fa-circle-xmark"></i> Vencido</span>
+                                {% elif e.situacao == 'MANUTENCAO' %}
+                                    <span class="badge badge-status badge-manutencao"><i class="fas fa-wrench"></i> Em Manutenção</span>
+                                {% else %}
+                                    <span class="badge badge-status badge-manutencao">{{ e.get_situacao_display|default:e.situacao }}</span>
+                                {% endif %}
+                                <i class="fas fa-pen-to-square edit-icon text-success"></i>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-5 text-muted">
+                            <i class="fas fa-search fa-2x mb-3 text-secondary opacity-50"></i>
+                            <p class="m-0 fw-medium">Nenhum extintor encontrado para os filtros selecionados.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {# ===== PAGINAÇÃO ===== #}
+    {% if extintores.has_other_pages %}
+      <div class="card-footer bg-white border-top d-flex flex-column flex-sm-row justify-content-between align-items-center gap-2 py-3 px-4">
+        <small class="mono text-muted" style="font-size: 0.75rem;">
+          EXIBINDO {{ extintores.start_index }}-{{ extintores.end_index }} DE {{ extintores.paginator.count }}
+        </small>
+
+        <ul class="pagination pagination-sm mb-0">
+          {% if extintores.has_previous %}
+            <li class="page-item">
+              <a class="page-link text-dark" href="?page={{ extintores.previous_page_number }}{% if setor_atual %}&setor={{ setor_atual }}{% endif %}{% if situacao_atual %}&situacao={{ situacao_atual }}{% endif %}{% if vencimento_atual %}&vencimento={{ vencimento_atual }}{% endif %}{% if vistoria_atual %}&vistoria={{ vistoria_atual }}{% endif %}{% if ordem_atual %}&ordem={{ ordem_atual }}{% endif %}">Anterior</a>
+            </li>
+          {% else %}
+            <li class="page-item disabled"><span class="page-link">Anterior</span></li>
+          {% endif %}
+
+          {% for num in extintores.paginator.page_range %}
+            {% if extintores.number == num %}
+              <li class="page-item active">
+                <span class="page-link" style="background: var(--amber-500); border-color: var(--amber-500); color: var(--graphite-950); font-weight: bold;">{{ num }}</span>
+              </li>
+            {% elif num > extintores.number|add:'-3' and num < extintores.number|add:'3' %}
+              <li class="page-item">
+                <a class="page-link text-dark" href="?page={{ num }}{% if setor_atual %}&setor={{ setor_atual }}{% endif %}{% if situacao_atual %}&situacao={{ situacao_atual }}{% endif %}{% if vencimento_atual %}&vencimento={{ vencimento_atual }}{% endif %}{% if vistoria_atual %}&vistoria={{ vistoria_atual }}{% endif %}{% if ordem_atual %}&ordem={{ ordem_atual }}{% endif %}">{{ num }}</a>
+              </li>
+            {% endif %}
+          {% endfor %}
+
+          {% if extintores.has_next %}
+            <li class="page-item">
+              <a class="page-link text-dark" href="?page={{ extintores.next_page_number }}{% if setor_atual %}&setor={{ setor_atual }}{% endif %}{% if situacao_atual %}&situacao={{ situacao_atual }}{% endif %}{% if vencimento_atual %}&vencimento={{ vencimento_atual }}{% endif %}{% if vistoria_atual %}&vistoria={{ vistoria_atual }}{% endif %}{% if ordem_atual %}&ordem={{ ordem_atual }}{% endif %}">Próximo</a>
+            </li>
+          {% else %}
+            <li class="page-item disabled"><span class="page-link">Próximo</span></li>
+          {% endif %}
+        </ul>
+      </div>
+    {% endif %}
+</div>
+
+<!-- Modal de Edição de Extintor -->
+<div class="modal fade" id="modalEditarExtintor" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 14px; overflow: hidden;">
+            <div class="modal-header border-0 text-white" style="background: linear-gradient(180deg, var(--sidebar-bg-start, #0f172a) 0%, var(--sidebar-bg-end, #1e293b) 100%);">
+                <h5 class="modal-title fw-bold fs-6">
+                    <i class="fas fa-clipboard-check text-success me-2"></i>Atualizar Extintor <span id="modalNumeroExtintor"></span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="formEditarExtintor" method="POST" action="">
+                {% csrf_token %}
+                <div class="modal-body p-4">
+                    
+                    <div class="mb-3">
+                        <label for="inputDataVistoria" class="form-label small fw-semibold text-muted">Data da Última Vistoria</label>
+                        <div class="input-group">
+                            <input type="date" name="data_vistoria" id="inputDataVistoria" class="form-control form-control-lg fs-6" required>
+                            <button type="button" class="btn btn-outline-secondary fw-semibold px-3" onclick="setarDataHoje()">
+                                <i class="fas fa-clock me-1"></i> Hoje
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label class="form-label small fw-bold text-muted text-uppercase mb-0">Data de Vencimento</label>
+                            <button type="button" id="btnMaisUmAno" class="btn btn-xs btn-outline-primary fw-semibold px-2 py-1" style="font-size: 0.75rem; border-radius: 4px;">
+                                <i class="fas fa-plus me-1"></i>1 Ano
+                            </button>
+                        </div>
+                        <input type="date" name="data_vencimento" id="modal_data_vencimento" class="form-control form-control-lg fs-6" required>
+                    </div>
+
+                    <div class="mb-2">
+                        <label for="selectSituacao" class="form-label small fw-semibold text-muted">Situação</label>
+                        <select name="situacao" id="selectSituacao" class="form-select form-select-lg fs-6" required>
+                            <option value="OK">Em Dia / Regular</option>
+                            <option value="PENDENTE">Necessita Inspeção</option>
+                            <option value="VENCIDO">Vencido</option>
+                            <option value="MANUTENCAO">Em Manutenção</option>
+                        </select>
+                    </div>
+
+                </div>
+                <div class="modal-footer bg-light border-0 px-4 py-3">
+                    <button type="button" class="btn btn-sm btn-link text-muted text-decoration-none fw-semibold" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary btn-lg fs-6 px-4">
+                        <i class="fas fa-check me-1"></i> Salvar Alterações
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Foto do Extintor -->
+<div class="modal fade" id="modalImagemExtintor" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 14px; overflow: hidden;">
+            <div class="modal-header border-0 text-white" style="background: linear-gradient(180deg, var(--sidebar-bg-start, #0f172a) 0%, var(--sidebar-bg-end, #1e293b) 100%);">
+                <h5 class="modal-title fw-bold fs-6">
+                    <i class="fas fa-image me-2" style="color: var(--primary, #10b981);"></i>Foto do Extintor <span id="modalImagemNumero"></span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0 text-center bg-dark">
+                <img id="imgExtintorModal" src="" alt="Foto do Extintor" class="img-fluid w-100" style="max-height: 70vh; object-fit: contain;">
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function abrirModalEdicao(id, numero, dataVistoria, situacao, dataVencimento) {
+    // Define a URL do formulário dinamicamente
+    document.getElementById('formEditarExtintor').action = `/extintores/${id}/editar-vistoria/`;
+    
+    // Preenche os campos do modal
+    document.getElementById('modalNumeroExtintor').innerText = `#${numero}`;
+    document.getElementById('inputDataVistoria').value = dataVistoria || '';
+    document.getElementById('selectSituacao').value = situacao || 'OK';
+    
+    // Preenche a Data de Vencimento recebida
+    document.getElementById('modal_data_vencimento').value = dataVencimento || '';
+
+    // Instancia e abre o modal Bootstrap
+    const modal = new bootstrap.Modal(document.getElementById('modalEditarExtintor'));
+    modal.show();
+}
+
+// Preenche a data da última vistoria com a data atual
+function setarDataHoje() {
+    const hoje = new Date().toISOString().split('T')[0];
+    document.getElementById('inputDataVistoria').value = hoje;
+}
+
+// Listener para o botão "+1 Ano" no Vencimento
+document.addEventListener('DOMContentLoaded', function() {
+    const btnMaisUmAno = document.getElementById('btnMaisUmAno');
+    
+    if (btnMaisUmAno) {
+        btnMaisUmAno.addEventListener('click', function() {
+            const inputVenc = document.getElementById('modal_data_vencimento');
+            
+            // Pega a data informada no input ou a data de hoje
+            let baseDate = inputVenc && inputVenc.value 
+                ? new Date(inputVenc.value + 'T00:00:00') 
+                : new Date();
+
+            const diaOriginal = baseDate.getDate();
+            baseDate.setFullYear(baseDate.getFullYear() + 1);
+
+            // Tratamento especial para 29/Fev em anos bissextos
+            if (baseDate.getDate() !== diaOriginal) {
+                baseDate.setDate(0); 
+            }
+
+            const ano = baseDate.getFullYear();
+            const mes = String(baseDate.getMonth() + 1).padStart(2, '0');
+            const dia = String(baseDate.getDate()).padStart(2, '0');
+
+            inputVenc.value = `${ano}-${mes}-${dia}`;
+        });
+    }
+});
+
+function abrirModalImagem(urlImagem, numero) {
+    document.getElementById('modalImagemNumero').innerText = `#${numero}`;
+    document.getElementById('imgExtintorModal').src = urlImagem;
+
+    const modal = new bootstrap.Modal(document.getElementById('modalImagemExtintor'));
+    modal.show();
+}
+</script>
+{% endblock %}

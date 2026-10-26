@@ -1,0 +1,348 @@
+{% extends "core/base.html" %}
+
+{% block title %}Fichas de EPIs por Colaborador · Segurança do Trabalho{% endblock %}
+{% block page_title %}Controle de EPIs{% endblock %}
+{% block page_subtitle %}Selecione um setor ou pesquise para listar os colaboradores{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Banner Informativo */
+    .sst-banner {
+        /* Gradiente suave e profissional alinhado ao tom de segurança */
+        background: linear-gradient(135deg, #047857 0%, #0f766e 100%);
+        border-radius: 12px;
+        color: #ffffff;
+        padding: 1.25rem 1.5rem;
+        box-shadow: 0 4px 12px rgba(15, 118, 110, 0.15);
+    }
+
+    .sst-banner-icon {
+        width: 44px;
+        height: 44px;
+        /* Fundo translúcido em verde-claro com ícone brilhante */
+        background: rgba(255, 255, 255, 0.18);
+        color: #ccfbf1;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+    }
+
+    /* Card de Filtro */
+    .filter-card-sst {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 1rem 1.25rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    }
+
+    /* Estilo da Tabela de Linhas */
+    .table-container {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .table-sst {
+        margin-bottom: 0;
+    }
+
+    .table-sst thead th {
+        background-color: #f8fafc;
+        color: #475569;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-weight: 700;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 0.75rem 1rem;
+        white-space: nowrap;
+    }
+
+    .table-sst tbody td {
+        padding: 0.75rem 1rem;
+        vertical-align: middle;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 0.875rem;
+        white-space: nowrap;
+    }
+
+    .table-sst tbody tr:hover {
+        background-color: #f8fafc;
+    }
+
+    /* Avatar Compacto */
+    .avatar-sm {
+        width: 32px;
+        height: 32px;
+        background-color: #f1f5f9;
+        color: #334155;
+        border: 1px solid #cbd5e1;
+        border-radius: 50%;
+        font-weight: 700;
+        font-size: 0.8rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    /* Status Pills */
+    .epi-status-pill {
+        background: #f0fdf4;
+        color: #166534;
+        border: 1px solid #bbf7d0;
+        border-radius: 12px;
+        padding: 0.2rem 0.6rem;
+        font-weight: 600;
+        font-size: 0.75rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+
+    .epi-status-pill.empty {
+        background: #fef2f2;
+        color: #991b1b;
+        border-color: #fecaca;
+    }
+
+    /* Botão Principal */
+    .btn-sst-primary {
+        background-color: #059669;
+        color: #ffffff;
+        border: none;
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        font-weight: 600;
+        font-size: 0.875rem;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        text-decoration: none;
+    }
+
+    .btn-sst-primary:hover {
+        background-color: #047857;
+        color: #ffffff;
+    }
+
+    /* Paginação */
+    .pagination .page-link {
+        color: #475569;
+        border-color: #e2e8f0;
+        border-radius: 6px;
+        margin: 0 2px;
+        font-weight: 600;
+    }
+
+    .pagination .page-item.active .page-link {
+        background-color: #0f766e;
+        border-color: #0f766e;
+        color: #ffffff;
+    }
+
+    /* Ajustes específicos para telas móveis */
+    @media (max-width: 576px) {
+        .sst-banner {
+            padding: 1rem;
+        }
+
+        .filter-card-sst {
+            padding: 0.875rem;
+        }
+
+        .pagination-container {
+            justify-content: center !important;
+            text-align: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0 pb-4">
+
+    <!-- Top Banner Informativo -->
+    <div class="sst-banner mb-4 d-flex align-items-sm-center justify-content-between flex-column flex-sm-row gap-3">
+        <div class="d-flex align-items-center gap-3">
+            <div class="sst-banner-icon">
+                <i class="fas fa-user-shield"></i>
+            </div>
+            <div>
+                <h5 class="fw-bold text-white mb-1 fs-6 fs-sm-5">EPIs por Colaborador</h5>
+                <p class="text-slate-300 small mb-0">Selecione o setor ou busque por nome para consultar EPIs por colaborador.</p>
+            </div>
+        </div>
+        {% if tem_filtro %}
+        <div class="d-flex align-items-center gap-2 align-self-start align-self-sm-auto">
+            <span class="badge bg-dark border border-secondary text-slate-300 px-3 py-2" style="font-weight: 500;">
+                <i class="fas fa-users me-1 text-warning"></i> Encontrados: <strong>{{ colaboradores.paginator.count }}</strong>
+            </span>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Barra de Busca e Filtro de Setor -->
+    <div class="filter-card-sst mb-4">
+        <form method="GET" class="row g-2 align-items-center">
+            <div class="col-12 col-md-5">
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0 text-muted" style="border-color: #cbd5e1; border-radius: 8px 0 0 8px;">
+                        <i class="fas fa-search"></i>
+                    </span>
+                    <input type="text" name="q" value="{{ query }}" class="form-control border-start-0" placeholder="Buscar por nome do colaborador..." style="border-color: #cbd5e1; border-radius: 0 8px 8px 0; font-size: 0.875rem;">
+                </div>
+            </div>
+
+            <div class="col-12 col-md-4">
+                <select name="setor" class="form-select" onchange="this.form.submit()" style="border-color: #cbd5e1; border-radius: 8px; font-size: 0.875rem; color: #334155;">
+                    <option value="">-- Selecione um Setor --</option>
+                    {% for s in setores %}
+                        <option value="{{ s.id }}" {% if setor_selecionado == s.id|stringformat:"s" %}selected{% endif %}>
+                            {{ s.nome }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-12 col-md-3 d-flex gap-2">
+                <button type="submit" class="btn-sst-primary w-100">
+                    <i class="fas fa-filter"></i> Filtrar
+                </button>
+                {% if query or setor_selecionado %}
+                    <a href="?" class="btn btn-light border text-secondary d-flex align-items-center justify-content-center px-3" style="border-radius: 8px;" title="Limpar Filtros">
+                        <i class="fas fa-times"></i>
+                    </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    <!-- Tabela em Linhas -->
+    <div class="table-container shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-sst align-middle">
+                <thead>
+                    <tr>
+                        <th style="min-width: 220px;">Colaborador</th>
+                        <th style="min-width: 140px;">Setor</th>
+                        <th style="min-width: 130px;" class="text-center">EPIs Entregues</th>
+                        <th style="min-width: 100px;" class="text-end">Ação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if not tem_filtro %}
+                        <tr>
+                            <td colspan="4" class="text-center py-5">
+                                <div class="text-muted mb-2">
+                                    <i class="fas fa-filter fa-2x text-secondary opacity-50"></i>
+                                </div>
+                                <h6 class="fw-bold text-dark mb-1">Aguardando Seleção de Filtro</h6>
+                                <p class="text-muted small mb-0">Selecione um <strong>Setor</strong> acima ou busque pelo <strong>Nome</strong> para exibir os resultados.</p>
+                            </td>
+                        </tr>
+                    {% else %}
+                        {% for c in colaboradores %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="avatar-sm">
+                                        {{ c.nome|slice:":1"|upper }}
+                                    </div>
+                                    <span class="fw-semibold text-dark text-truncate" style="max-width: 220px;" title="{{ c.nome }}">
+                                        {{ c.nome }}
+                                    </span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="text-secondary small">
+                                    <i class="fas fa-building me-1 opacity-50"></i>{{ c.setor.nome }}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                {% if c.possui_epi_vencido %}
+                                    <!-- Exibição quando há EPI vencido -->
+                                    <span class="epi-status-pill empty" title="{{ c.total_epis_vencidos }} EPI(s) com troca vencida">
+                                        <i class="fas fa-exclamation-circle text-danger"></i> {{ c.total_epis }} EPI(s) ({{ c.total_epis_vencidos }} vencido{% if c.total_epis_vencidos > 1 %}s{% endif %})
+                                    </span>
+                                {% elif c.total_epis > 0 %}
+                                    <!-- Exibição quando todos estão em dia -->
+                                    <span class="epi-status-pill">
+                                        <i class="fas fa-check-circle"></i> {{ c.total_epis }} EPI(s)
+                                    </span>
+                                {% else %}
+                                    <!-- Exibição quando não tem nenhum EPI vinculado -->
+                                    <span class="epi-status-pill text-muted border-secondary bg-light">
+                                        <i class="fas fa-minus-circle"></i> Sem EPIs
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <a href="{% url 'ficha_colaborador_epis' c.id %}?setor={{ setor_selecionado }}&q={{ query }}" class="btn btn-sm btn-outline-secondary px-2 py-1" style="font-size: 0.8rem;" title="Acessar Ficha">
+                                    <i class="fas fa-folder-open me-1"></i> Ficha
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center py-5">
+                                <div class="text-muted mb-2">
+                                    <i class="fas fa-search fa-2x text-secondary opacity-50"></i>
+                                </div>
+                                <h6 class="fw-bold text-dark mb-1">Nenhum colaborador encontrado</h6>
+                                <p class="text-muted small mb-0">Tente ajustar a busca ou alterar o setor selecionado.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Paginação -->
+    {% if colaboradores.has_other_pages %}
+    <div class="d-flex align-items-center justify-content-between mt-4 flex-wrap gap-3 pagination-container">
+        <span class="small text-muted w-100 w-sm-auto text-center text-sm-start">
+            Exibindo página {{ colaboradores.number }} de {{ colaboradores.paginator.num_pages }}
+        </span>
+        <ul class="pagination pagination-sm mb-0">
+            {% if colaboradores.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ colaboradores.previous_page_number }}&q={{ query }}&setor={{ setor_selecionado }}">
+                        <i class="fas fa-chevron-left"></i> Anterior
+                    </a>
+                </li>
+            {% endif %}
+
+            {% for num in colaboradores.paginator.page_range %}
+                {% if colaboradores.number == num %}
+                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                {% elif num > colaboradores.number|add:'-3' and num < colaboradores.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}&q={{ query }}&setor={{ setor_selecionado }}">{{ num }}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+
+            {% if colaboradores.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ colaboradores.next_page_number }}&q={{ query }}&setor={{ setor_selecionado }}">
+                        Próxima <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+            {% endif %}
+        </ul>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

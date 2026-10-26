@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    container_name: sistema_sst
+    restart: always
+    ports:
+      - "8090:8000"
+    volumes:
+      - static_data:/app/staticfiles
+      - sistema_sst_media_data:/app/media     # o sistema aponta pra (os.path.joins(BASE_DIR,'media')) o docker pega a pasta media e conecta pro lado de fora
+    environment:
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DEBUG=${DEBUG}
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+            python manage.py collectstatic --noinput &&
+            gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3 --threads 2 --worker-class gthread --timeout 120"
+
+volumes:
+  static_data:
+  sistema_sst_media_data:  # esse nome tem que ser igual ao que fica no volumes

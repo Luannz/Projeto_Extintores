@@ -1,0 +1,269 @@
+{% extends "core/base.html" %}
+
+{% block title %}Gerar Documentos | DP & Segurança do Trabalho{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+
+    {# ---------- Coluna principal: formulário ---------- #}
+    <div class="col-12 col-lg-8">
+
+        <div class="d-flex align-items-center gap-3 mb-4">
+            <div class="page-badge"><i class="fas fa-file-word"></i></div>
+            <div>
+                <h4 class="fw-bold mb-0">Gerar Documentos</h4>
+                <div class="text-muted small">Crie um documento Word para cada linha da planilha</div>
+            </div>
+        </div>
+
+        <form method="post" enctype="multipart/form-data" id="formGerar" class="card p-4">
+            {% csrf_token %}
+
+            <div class="row g-3">
+                {# Upload da planilha #}
+                <div class="col-12 col-md-6">
+                    <div class="passo-titulo"><span class="passo-num">1</span> Planilha de dados</div>
+                    <label class="dropzone" id="dzPlanilha">
+                        <input type="file" name="planilha" accept=".xlsx,.xls" required>
+                        <i class="fas fa-file-excel dz-icone"></i>
+                        <div class="dz-texto">Clique ou arraste a planilha aqui</div>
+                        <div class="dz-dica">.xlsx ou .xls</div>
+                        <div class="dz-nome"></div>
+                    </label>
+                </div>
+
+                {# Upload do modelo #}
+                <div class="col-12 col-md-6">
+                    <div class="passo-titulo"><span class="passo-num">2</span> Modelo do documento</div>
+                    <label class="dropzone" id="dzModelo">
+                        <input type="file" name="modelo" accept=".docx" required>
+                        <i class="fas fa-file-word dz-icone"></i>
+                        <div class="dz-texto">Clique ou arraste o modelo aqui</div>
+                        <div class="dz-dica">.docx</div>
+                        <div class="dz-nome"></div>
+                    </label>
+                </div>
+            </div>
+
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mt-4 pt-3 border-top">
+                <div class="text-muted small">
+                    <i class="fas fa-circle-info me-1"></i>
+                    Você receberá um arquivo <strong>.zip</strong> com todos os documentos.
+                </div>
+                <button type="submit" class="btn btn-primary px-4" id="btnGerar">
+                    <span class="btn-normal"><i class="fas fa-file-zipper me-2"></i>Gerar documentos</span>
+                    <span class="btn-carregando d-none">
+                        <span class="spinner-border spinner-border-sm me-2" role="status"></span>Gerando...
+                    </span>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    {# ---------- Coluna lateral: guia ---------- #}
+    <div class="col-12 col-lg-4">
+        <div class="card p-4 guia-card">
+            <h6 class="fw-bold mb-3"><i class="fas fa-lightbulb text-warning me-2"></i>Como funciona</h6>
+
+            <ol class="guia-passos">
+                <li>Na planilha, use uma <strong>linha por funcionário</strong>, com os títulos das colunas iguais aos campos abaixo.</li>
+                <li>No modelo Word, escreva os campos entre chaves duplas, onde os dados devem aparecer.</li>
+                <li>Envie os dois arquivos e clique em <strong>Gerar documentos</strong>.</li>
+            </ol>
+
+            <div class="text-muted small text-uppercase fw-semibold mt-3 mb-2" style="letter-spacing: .05em;">Campos disponíveis</div>
+            <div class="d-flex flex-wrap gap-2">
+                {% verbatim %}
+                <span class="campo-tag">{{FUNCIONARIO}}</span>
+                <span class="campo-tag">{{FUNCAO}}</span>
+                <span class="campo-tag">{{SETOR}}</span>
+                <span class="campo-tag">{{EMPRESA}}</span>
+                <span class="campo-tag">{{CPF}}</span>
+                <span class="campo-tag">{{REALIZA}}</span>
+                <span class="campo-tag">{{DATA}}</span>
+                <span class="campo-tag">{{DESCRICAO}}</span>
+                {% endverbatim %}
+            </div>
+
+            <div class="guia-aviso mt-3">
+                <i class="fas fa-triangle-exclamation me-2"></i>
+                Digite cada campo de uma vez só no Word. Se trocar a formatação no meio, ele pode não ser substituído.
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Selo do título (mesmo estilo do logo da sidebar) */
+    .page-badge {
+        width: 46px;
+        height: 46px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #34d399 0%, #059669 100%);
+        color: #fff;
+        font-size: 1.2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        flex-shrink: 0;
+    }
+
+    /* Títulos dos passos */
+    .passo-titulo {
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--text-main);
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .passo-num {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: var(--primary-light);
+        color: var(--primary-hover);
+        font-size: 0.72rem;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Áreas de upload */
+    .dropzone {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        min-height: 170px;
+        padding: 1.25rem 1rem;
+        border: 2px dashed #cbd5e1;
+        border-radius: 12px;
+        background: #f8fafc;
+        cursor: pointer;
+        transition: border-color 0.2s ease, background-color 0.2s ease;
+    }
+    .dropzone:hover,
+    .dropzone.arrastando {
+        border-color: var(--primary);
+        background: var(--primary-light);
+    }
+    /* o input ocupa a área toda, invisível: clicar e arrastar funcionam nativamente */
+    .dropzone input[type="file"] {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        cursor: pointer;
+    }
+    .dz-icone { font-size: 2rem; color: #94a3b8; margin-bottom: 0.5rem; transition: color 0.2s ease; }
+    .dropzone:hover .dz-icone,
+    .dropzone.arrastando .dz-icone { color: var(--primary); }
+    .dz-texto { font-size: 0.88rem; font-weight: 600; color: var(--text-main); }
+    .dz-dica  { font-size: 0.75rem; color: var(--text-muted); }
+    .dz-nome  {
+        margin-top: 0.6rem;
+        max-width: 100%;
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: var(--primary-hover);
+        word-break: break-all;
+    }
+
+    /* Estado: arquivo escolhido */
+    .dropzone.tem-arquivo {
+        border-style: solid;
+        border-color: var(--primary);
+        background: var(--primary-light);
+    }
+    .dropzone.tem-arquivo .dz-icone { color: var(--primary); }
+
+    /* Guia lateral */
+    .guia-passos {
+        padding-left: 1.1rem;
+        margin-bottom: 0;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+    }
+    .guia-passos li { margin-bottom: 0.5rem; }
+    .guia-passos strong { color: var(--text-main); }
+
+    .campo-tag {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.74rem;
+        font-weight: 600;
+        background: var(--primary-light);
+        color: var(--primary-hover);
+        border: 1px solid #a7f3d0;
+        border-radius: 6px;
+        padding: 0.2rem 0.5rem;
+    }
+
+    .guia-aviso {
+        font-size: 0.78rem;
+        color: #92400e;
+        background: #fffbeb;
+        border: 1px solid #fde68a;
+        border-radius: 8px;
+        padding: 0.6rem 0.75rem;
+    }
+
+    /* Card do formulário sem o "pulinho" do hover global */
+    #formGerar:hover { box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02); }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    // Mostra o nome do arquivo escolhido (ou arrastado) em cada área de upload
+    document.querySelectorAll('.dropzone').forEach(function (zona) {
+        const input = zona.querySelector('input[type="file"]');
+        const nome  = zona.querySelector('.dz-nome');
+
+        input.addEventListener('change', function () {
+            if (input.files.length > 0) {
+                nome.textContent = input.files[0].name;
+                zona.classList.add('tem-arquivo');
+            } else {
+                nome.textContent = '';
+                zona.classList.remove('tem-arquivo');
+            }
+        });
+
+        ['dragenter', 'dragover'].forEach(function (ev) {
+            zona.addEventListener(ev, function () { zona.classList.add('arrastando'); });
+        });
+        ['dragleave', 'drop'].forEach(function (ev) {
+            zona.addEventListener(ev, function () { zona.classList.remove('arrastando'); });
+        });
+    });
+
+    // Botão de carregando ao enviar
+    const form = document.getElementById('formGerar');
+    const btn  = document.getElementById('btnGerar');
+
+    form.addEventListener('submit', function () {
+        btn.disabled = true;
+        btn.querySelector('.btn-normal').classList.add('d-none');
+        btn.querySelector('.btn-carregando').classList.remove('d-none');
+
+        // A resposta é um download: a página não recarrega, então o botão é liberado depois de um tempo
+        setTimeout(function () {
+            btn.disabled = false;
+            btn.querySelector('.btn-normal').classList.remove('d-none');
+            btn.querySelector('.btn-carregando').classList.add('d-none');
+        }, 6000);
+    });
+});
+</script>
+{% endblock %}
