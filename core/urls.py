@@ -10,6 +10,10 @@ urlpatterns = [
     path('logout/', views.logout_view, name='logout'),
     path('cadastro/', views.cadastro_view, name='cadastro'),
 
+    # == EMPRESAS ==
+    path('empresas/', views.listar_empresas, name='listar_empresas'),
+    path('empresas/<int:pk>/', views.detalhe_empresa, name='detalhe_empresa'),
+
     # == SETORES ==
     path('setores/', views.listar_setores, name='listar_setores'),
 

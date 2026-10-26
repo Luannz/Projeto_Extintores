@@ -12,9 +12,10 @@ from django.db import IntegrityError, transaction
 from django.db.models import Case, When, Value, IntegerField, Q, Max, F, Count, Sum
 from datetime import datetime, timedelta, date
 from django.http import FileResponse
+from django.forms import HiddenInput
 
-from .forms import RegistroUsuarioForm, SetorForm, ExtintorForm, ColaboradorForm
-from .models import Setor, Extintor, Usuario, Colaborador
+from .forms import RegistroUsuarioForm, SetorForm, ExtintorForm, ColaboradorForm, EmpresaForm
+from .models import Setor, Extintor, Usuario, Colaborador, Empresa
 
 import logging
 logger = logging.getLogger(__name__)
@@ -59,6 +60,7 @@ def inicio_view(request):
 
     setores = Setor.objects.annotate(total_extintores=Count('extintores')).order_by('nome')
     colaboradores = Colaborador.objects.select_related('setor').order_by('nome')
+    empresas = Empresa.objects.filter(ativo=True).order_by('nome')
 
     # Listas para separar na tela inicial
     hoje = date.today()
@@ -84,6 +86,7 @@ def inicio_view(request):
     )
 
     return render(request,"core/inicio.html",{
+            "empresas": empresas,
             "setores": setores,
             "colaboradores": colaboradores,
             "extintores_vencidos": extintores_vencidos,
@@ -97,6 +100,97 @@ def csrf_failure_view(request, reason=""):
     # Adiciona a mensagem que o usuário vai ler ao chegar no login
     messages.warning(request, "Sua sessão expirou por inatividade. Por favor, entre novamente.")
     return redirect('login')
+
+
+# ============= EMPRESAS ============
+
+@login_required
+def listar_empresas(request):
+    hoje = timezone.localdate()
+    empresas_list = Empresa.objects.annotate(
+        total_setores=Count('setores', distinct=True),
+        total_extintores=Count('setores__extintores', distinct=True),
+        total_vencidos=Count(
+            'setores__extintores',
+            filter=Q(setores__extintores__data_vencimento__lt=hoje),
+            distinct=True,
+        ),
+    ).order_by('nome')
+
+    busca = request.GET.get("busca", "").strip()
+    if busca:
+        empresas_list = empresas_list.filter(Q(nome__icontains=busca) | Q(cnpj__icontains=busca))
+
+    form = EmpresaForm()
+    if request.method == "POST":
+        empresa_id = request.POST.get("empresa_id")
+        if empresa_id:
+            empresa = get_object_or_404(Empresa, pk=empresa_id)
+            form_post = EmpresaForm(request.POST, instance=empresa)
+            msg = f'Empresa "{empresa.nome}" atualizada com sucesso!'
+        else:
+            form_post = EmpresaForm(request.POST)
+            msg = 'Empresa cadastrada com sucesso!'
+
+        if form_post.is_valid():
+            form_post.save()
+            messages.success(request, msg)
+            return redirect("listar_empresas")
+        form = form_post  # reexibe com os erros
+
+    empresas = Paginator(empresas_list, 10).get_page(request.GET.get("page"))
+    return render(request, "core/empresas_lista.html", {
+        "empresas": empresas, "form": form, "busca": busca,
+    })
+
+
+@login_required
+def detalhe_empresa(request, pk):
+    empresa = get_object_or_404(Empresa, pk=pk)
+    hoje = timezone.localdate()
+    limite = hoje + timedelta(days=30)
+
+    # Cadastro rápido de setor dentro da própria empresa
+    form_setor = SetorForm(request.POST or None, initial={"empresa": empresa.pk})
+    form_setor.fields["empresa"].widget = HiddenInput()
+    if request.method == "POST":
+        if form_setor.is_valid():
+            form_setor.save()
+            messages.success(request, "Setor cadastrado com sucesso!")
+            return redirect("detalhe_empresa", pk=empresa.pk)
+
+    setores = empresa.setores.annotate(
+        total=Count('extintores'),
+        vencidos=Count('extintores', filter=Q(extintores__data_vencimento__lt=hoje)),
+        a_vencer=Count('extintores', filter=Q(
+            extintores__data_vencimento__gte=hoje,
+            extintores__data_vencimento__lte=limite,
+        )),
+    ).order_by('nome')
+
+    extintores_qs = Extintor.objects.filter(setor__empresa=empresa).select_related('setor')
+
+    setor_filtro = request.GET.get("setor", "").strip()
+    extintores_list = extintores_qs
+    if setor_filtro:
+        extintores_list = extintores_list.filter(setor_id=setor_filtro)
+    extintores_list = extintores_list.order_by('setor__nome', 'numero')
+
+    extintores = Paginator(extintores_list, 15).get_page(request.GET.get("page"))
+
+    return render(request, "core/empresa_detalhe.html", {
+        "empresa": empresa,
+        "setores": setores,
+        "extintores": extintores,
+        "setor_filtro": setor_filtro,
+        "form_setor": form_setor,
+        "hoje": hoje,
+        "total_extintores": extintores_qs.count(),
+        "total_vencidos": extintores_qs.filter(data_vencimento__lt=hoje).count(),
+        "total_a_vencer": extintores_qs.filter(data_vencimento__range=(hoje, limite)).count(),
+    })
+
+
 
 
 # ============= SETORES ============
@@ -243,6 +337,11 @@ def listar_extintores(request):
     if setor_filtro:
         extintores_list = extintores_list.filter(setor_id=setor_filtro)
 
+    # Filtro por Empresa
+    empresa_filtro = request.GET.get("empresa", "").strip()
+    if empresa_filtro:
+        extintores_list = extintores_list.filter(setor__empresa_id=empresa_filtro)
+
     # Filtro por Número
     numero_filtro = request.GET.get("numero", "").strip()
     if numero_filtro and numero_filtro.isdigit():
@@ -255,6 +354,7 @@ def listar_extintores(request):
 
     # Busca a lista de setores cadastrados para popular o select de busca
     setores = Setor.objects.all().order_by('nome')
+    empresas = Empresa.objects.filter(ativo=True).order_by('nome')
 
     # Passamos o form genérico para alimentar os selects nos modais de edição
     form = ExtintorForm()
@@ -262,6 +362,7 @@ def listar_extintores(request):
     return render(request, 'core/extintores_lista.html', {
         'extintores': extintores,
         'setores': setores,
+        "empresas": empresas,
         'setor_filtro': setor_filtro,
         'numero_filtro': numero_filtro,
         'form': form
@@ -309,6 +410,11 @@ def inspecao_extintores(request):
     setor_filtro = request.GET.get("setor")
     if setor_filtro:
         extintores_list = extintores_list.filter(setor_id=setor_filtro)
+
+    # Empresa
+    empresa_filtro = request.GET.get("empresa", "").strip()
+    if empresa_filtro:
+        extintores_list = extintores_list.filter(setor__empresa_id=empresa_filtro)
 
     # Situação
     situacao_filtro = request.GET.get("situacao")
@@ -362,6 +468,7 @@ def inspecao_extintores(request):
         {
             "extintores": extintores_paginados,
             "setores": Setor.objects.filter(ativo=True),
+            "empresas": Empresa.objects.filter(ativo=True),
             # Filtros mantidos no contexto para preencher os selects no HTML
             "setor_atual": setor_filtro,
             "situacao_atual": situacao_filtro,

@@ -17,19 +17,44 @@ username_validator_com_espaco = RegexValidator(
     code="invalid_username",
 )
 
-class Setor(models.Model):
 
+class Empresa(models.Model):
     ativo = models.BooleanField(default=True)
-    codigo = models.CharField(max_length=10, unique=True, blank=True, null=True)
-    nome = models.CharField(max_length=100, unique=True)
+    nome = models.CharField(max_length=150, unique=True, verbose_name="Nome / Razão Social")
+    telefone = models.CharField(max_length=20, blank=True)
+    email = models.EmailField(blank=True)
+    endereco = models.CharField(max_length=255, blank=True, verbose_name="Endereço")
+    criado_em = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ['nome']
-        verbose_name = 'Setor'
-        verbose_name_plural = 'Setores'
+        verbose_name = 'Empresa'
+        verbose_name_plural = 'Empresas'
 
     def __str__(self):
         return self.nome
+
+class Setor(models.Model):
+    empresa = models.ForeignKey(
+        Empresa, on_delete=models.PROTECT,
+        related_name="setores", verbose_name="Empresa",
+    )
+    ativo = models.BooleanField(default=True)
+    codigo = models.CharField(max_length=10, blank=True, null=True)
+    nome = models.CharField(max_length=100)
+
+    class Meta:
+        ordering = ['empresa__nome', 'nome']
+        verbose_name = 'Setor'
+        verbose_name_plural = 'Setores'
+        constraints = [
+            models.UniqueConstraint(fields=['empresa', 'nome'], name='unique_setor_nome_por_empresa'),
+            models.UniqueConstraint(
+                fields=['empresa', 'codigo'],
+                condition=models.Q(codigo__isnull=False),
+                name='unique_setor_codigo_por_empresa',
+            ),
+        ]
 
 class Usuario(AbstractUser):
     # Sobrescreve o username do AbstractUser para aceitar espaços

@@ -1,0 +1,54 @@
+{% extends "core/base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0">Empresas</h4>
+  <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalEmpresa">
+    <i class="bi bi-plus-lg"></i> Nova empresa
+  </button>
+</div>
+
+<form method="get" class="mb-3">
+  <input type="text" name="busca" value="{{ busca }}" class="form-control" placeholder="Buscar por nome ou CNPJ...">
+</form>
+
+<div class="table-responsive">
+  <table class="table table-hover align-middle">
+    <thead>
+      <tr><th>Empresa</th><th class="text-center">Setores</th>
+          <th class="text-center">Extintores</th><th class="text-center">Vencidos</th><th></th></tr>
+    </thead>
+    <tbody>
+    {% for e in empresas %}
+      <tr>
+        <td>{{ e.nome }}{% if not e.ativo %} <span class="badge bg-secondary">Inativa</span>{% endif %}</td>
+        <td class="text-center">{{ e.total_setores }}</td>
+        <td class="text-center">{{ e.total_extintores }}</td>
+        <td class="text-center">
+          {% if e.total_vencidos %}<span class="badge bg-danger">{{ e.total_vencidos }}</span>{% else %}0{% endif %}
+        </td>
+        <td class="text-end"><a href="{% url 'detalhe_empresa' e.pk %}" class="btn btn-sm btn-outline-primary">Abrir</a></td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="6" class="text-center text-muted">Nenhuma empresa cadastrada.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Modal de cadastro -->
+<div class="modal fade" id="modalEmpresa" tabindex="-1">
+  <div class="modal-dialog modal-lg"><div class="modal-content">
+    <form method="post">{% csrf_token %}
+      <div class="modal-header"><h5 class="modal-title">Nova empresa</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        {{ form.as_div }}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Salvar</button>
+      </div>
+    </form>
+  </div></div>
+</div>
+{% endblock %}

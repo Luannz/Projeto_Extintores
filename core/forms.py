@@ -3,7 +3,7 @@
 from django import forms
 from django.forms import ClearableFileInput
 from django.contrib.auth.forms import UserCreationForm
-from .models import Usuario, Extintor, Setor, Colaborador
+from .models import Usuario, Extintor, Setor, Colaborador, Empresa
 from django.core.validators import RegexValidator
 
 class MultipleFileInput(ClearableFileInput):
@@ -75,12 +75,27 @@ class RegistroUsuarioForm(UserCreationForm):
         return user
 
 
+class EmpresaForm(forms.ModelForm):
+    class Meta:
+        model = Empresa
+        fields = ["nome", "telefone", "email", "endereco", "ativo"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for name, field in self.fields.items():
+            css = "form-check-input" if name == "ativo" else "form-control"
+            field.widget.attrs.setdefault("class", css)
+
+
 class SetorForm(forms.ModelForm):
     class Meta:
         model = Setor
-        fields = ["codigo", "nome", "ativo"]
+        fields = ["empresa", "codigo", "nome", "ativo"]
 
         widgets = {
+            "empresa": forms.Select(
+                attrs={"class": "form-select"}),
+
             "codigo": forms.TextInput(
                 attrs={
                     "class": "form-control",
@@ -101,6 +116,7 @@ class SetorForm(forms.ModelForm):
         }
 
         labels = {
+            "empresa": "Empresa",
             "codigo": "Código",
             "nome": "Nome do Setor",
             "ativo": "Setor Ativo",
@@ -192,7 +208,12 @@ class ExtintorForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Exibe APENAS setores ativos na listagem do select
-        self.fields['setor'].queryset = Setor.objects.filter(ativo=True).order_by('nome')
+        self.fields['setor'].queryset = (
+            Setor.objects.filter(ativo=True, empresa__ativo=True)
+            .select_related('empresa')
+            .order_by('empresa__nome', 'nome')
+        )
+        self.fields['setor'].label_from_instance = lambda s: f"{s.empresa.nome} — {s.nome}"
 
     def clean(self):
         cleaned_data = super().clean()

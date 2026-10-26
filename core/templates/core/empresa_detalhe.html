@@ -1,0 +1,82 @@
+{% extends "core/base.html" %}
+{% block content %}
+<a href="{% url 'listar_empresas' %}" class="text-decoration-none">&larr; Empresas</a>
+<h4 class="mt-2">{{ empresa.nome }}</h4>
+<p class="text-muted">
+  {{ empresa.cnpj|default:"" }} {% if empresa.responsavel %}· {{ empresa.responsavel }}{% endif %}
+  {% if empresa.telefone %}· {{ empresa.telefone }}{% endif %}
+</p>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-4"><div class="card text-center"><div class="card-body">
+    <div class="fs-3">{{ total_extintores }}</div><div class="text-muted">Extintores</div></div></div></div>
+  <div class="col-md-4"><div class="card text-center border-danger"><div class="card-body">
+    <div class="fs-3 text-danger">{{ total_vencidos }}</div><div class="text-muted">Vencidos</div></div></div></div>
+  <div class="col-md-4"><div class="card text-center border-warning"><div class="card-body">
+    <div class="fs-3 text-warning">{{ total_a_vencer }}</div><div class="text-muted">Vencem em 30 dias</div></div></div></div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-2">
+  <h5 class="mb-0">Setores</h5>
+  <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modalSetor">Novo setor</button>
+</div>
+<div class="table-responsive mb-4">
+  <table class="table table-sm align-middle">
+    <thead><tr><th>Setor</th><th class="text-center">Extintores</th>
+      <th class="text-center">Vencidos</th><th class="text-center">A vencer</th><th></th></tr></thead>
+    <tbody>
+    {% for s in setores %}
+      <tr {% if s.pk|stringformat:"s" == setor_filtro %}class="table-active"{% endif %}>
+        <td>{{ s.nome }}{% if not s.ativo %} <span class="badge bg-secondary">Inativo</span>{% endif %}</td>
+        <td class="text-center">{{ s.total }}</td>
+        <td class="text-center">{{ s.vencidos }}</td>
+        <td class="text-center">{{ s.a_vencer }}</td>
+        <td class="text-end"><a href="?setor={{ s.pk }}" class="btn btn-sm btn-outline-secondary">Ver extintores</a></td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="5" class="text-muted text-center">Nenhum setor cadastrado.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-2">
+  <h5 class="mb-0">Extintores {% if setor_filtro %}<a href="{% url 'detalhe_empresa' empresa.pk %}" class="small">(limpar filtro)</a>{% endif %}</h5>
+</div>
+<div class="table-responsive">
+  <table class="table table-hover align-middle">
+    <thead><tr><th>Nº</th><th>Setor</th><th>Carga</th><th>Tipo</th><th>Vencimento</th><th>Situação</th></tr></thead>
+    <tbody>
+    {% for e in extintores %}
+      <tr>
+        <td>{{ e.numero|default:"—" }}</td>
+        <td>{{ e.setor.nome }}</td>
+        <td>{{ e.get_carga_display }}</td>
+        <td>{{ e.tipo }}</td>
+        <td>{{ e.data_vencimento|date:"d/m/Y" }}</td>
+        <td>
+          {% if e.data_vencimento < hoje %}<span class="badge bg-danger">Vencido</span>
+          {% else %}<span class="badge bg-success">{{ e.get_situacao_display }}</span>{% endif %}
+        </td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="6" class="text-muted text-center">Nenhum extintor encontrado.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Modal novo setor -->
+<div class="modal fade" id="modalSetor" tabindex="-1">
+  <div class="modal-dialog"><div class="modal-content">
+    <form method="post">{% csrf_token %}
+      <div class="modal-header"><h5 class="modal-title">Novo setor em {{ empresa.nome }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">{{ form_setor.as_div }}</div>
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-primary">Salvar</button>
+      </div>
+    </form>
+  </div></div>
+</div>
+{% endblock %}
