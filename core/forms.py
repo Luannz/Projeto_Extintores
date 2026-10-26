@@ -3,7 +3,7 @@
 from django import forms
 from django.forms import ClearableFileInput
 from django.contrib.auth.forms import UserCreationForm
-from .models import Usuario, Extintor, Setor, Colaborador, Epi, RegistroEpi
+from .models import Usuario, Extintor, Setor, Colaborador
 from django.core.validators import RegexValidator
 
 class MultipleFileInput(ClearableFileInput):
@@ -116,26 +116,6 @@ class ColaboradorForm(forms.ModelForm):
             "setor": forms.Select(attrs={"class": "form-select"}),
         }
 
-
-class EpiForm(forms.ModelForm):
-    class Meta:
-        model = Epi
-        fields = ["nome", "periodicidade_valor", "periodicidade_unidade"]
-        widgets = {
-            "nome": forms.TextInput(attrs={"class": "form-control"}),
-            "periodicidade_valor": forms.NumberInput(attrs={"class": "form-control", "min": 1}),
-            "periodicidade_unidade": forms.Select(attrs={"class": "form-select"}),
-        }
-
-
-class RegistroEpiForm(forms.ModelForm):
-    class Meta:
-        model = RegistroEpi
-        fields = ["epi", "data_entrega"]
-        widgets = {
-            "epi": forms.Select(attrs={"class": "form-select"}),
-            "data_entrega": forms.DateInput(attrs={"class": "form-control", "type": "date"}),
-        }
 
 class ExtintorForm(forms.ModelForm):
     class Meta:

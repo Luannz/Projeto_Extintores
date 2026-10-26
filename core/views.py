@@ -13,10 +13,9 @@ from django.db.models import Case, When, Value, IntegerField, Q, Max, F, Count, 
 from datetime import datetime, timedelta, date
 from django.http import FileResponse
 
-from .forms import RegistroUsuarioForm, SetorForm, ExtintorForm, ColaboradorForm, EpiForm, RegistroEpiForm
-from .models import Setor, Extintor, Usuario, Colaborador, Epi, RegistroEpi
+from .forms import RegistroUsuarioForm, SetorForm, ExtintorForm, ColaboradorForm
+from .models import Setor, Extintor, Usuario, Colaborador
 
-from .gerar_documentos import gerar_zip_documentos
 import logging
 logger = logging.getLogger(__name__)
 
@@ -59,25 +58,11 @@ def cadastro_view(request):
 def inicio_view(request):
 
     setores = Setor.objects.annotate(total_extintores=Count('extintores')).order_by('nome')
-    colaboradores = Colaborador.objects.select_related('setor').annotate(total_epis=Count('epis_vinculados')).order_by('nome')
-
-    # 1. TODOS OS EPIS
-    # Busca todos os registros trazendo os relacionamentos para evitar consultas extras ao banco (N+1)
-    todos_registros = RegistroEpi.objects.select_related('colaborador', 'colaborador__setor', 'epi').all()
+    colaboradores = Colaborador.objects.select_related('setor').order_by('nome')
 
     # Listas para separar na tela inicial
-    epis_vencidos = []
-    epis_alerta = [] # Vencem nos próximos 7 dias ou hoje
-
     hoje = date.today()
     limite_alerta = hoje + timedelta(days=7)
-
-    for registro in todos_registros:
-        proxima = registro.data_proxima_troca
-        if proxima < hoje:
-            epis_vencidos.append(registro)
-        elif hoje <= proxima <= limite_alerta:
-            epis_alerta.append(registro)
 
     #2. AGORA TODOS OS EXTINTORES
     todos_extintores = Extintor.objects.select_related('setor').all()
@@ -94,7 +79,6 @@ def inicio_view(request):
             extintores_alerta.append(extintor)
 
     # Métricas
-    total_pendencias_epi = len(epis_vencidos) + len(epis_alerta)
     total_pendencias_extintor = len(extintores_vencidos) + len(
         extintores_alerta
     )
@@ -102,13 +86,9 @@ def inicio_view(request):
     return render(request,"core/inicio.html",{
             "setores": setores,
             "colaboradores": colaboradores,
-            "epis_vencidos": epis_vencidos,
-            "epis_alerta": epis_alerta,
             "extintores_vencidos": extintores_vencidos,
             "extintores_alerta": extintores_alerta,
-            "total_pendencias_epi": total_pendencias_epi,
             "total_pendencias_extintor": total_pendencias_extintor,
-            "total_pendencias": total_pendencias_epi + total_pendencias_extintor,
         },
     )
 
@@ -172,7 +152,6 @@ def listar_setores(request):
 def listar_colaboradores(request):
     colaboradores_list = (
         Colaborador.objects.select_related("setor")
-        .annotate(total_epis=Count("epis_vinculados"))
         .order_by("nome")
     )
 
@@ -229,168 +208,6 @@ def listar_colaboradores(request):
             "setor_selecionado": setor_id,
         },
     )
-
-# =============== EPI'S ===================
-
-@login_required
-def listar_epis(request):
-    epis_list = Epi.objects.annotate(
-        total_registros=Count("registros")
-    ).order_by("nome")
-    form = EpiForm(request.POST or None)
-
-    if request.method == "POST":
-        epi_id = request.POST.get("epi_id")
-        if epi_id:
-            # Edição
-            epi = get_object_or_404(Epi, pk=epi_id)
-            form_edit = EpiForm(request.POST, instance=epi)
-            if form_edit.is_valid():
-                form_edit.save()
-                messages.success(
-                    request, f'EPI "{epi.nome}" atualizado com sucesso!'
-                )
-                return redirect("listar_epis")
-        else:
-            # Criação
-            if form.is_valid():
-                form.save()
-                messages.success(request, "EPI cadastrado com sucesso!")
-                return redirect("listar_epis")
-
-    paginator = Paginator(epis_list, 10)
-    page_number = request.GET.get("page")
-    epis = paginator.get_page(page_number)
-
-    return render(
-        request,
-        "core/epis_lista.html",
-        {
-            "epis": epis,
-            "form": form,
-        },
-    )
-
-# ============ VÍNCULO DE EPIS =============
-
-@login_required
-def status_epis(request):
-    """Lista de Colaboradores com busca e filtros para o técnico de segurança."""
-    query = request.GET.get("q", "").strip()
-    setor_id = request.GET.get("setor", "").strip()
-
-    # Verifica se algum filtro foi aplicado
-    tem_filtro = bool(query or setor_id)
-
-    if tem_filtro:
-        colaboradores_list = Colaborador.objects.select_related(
-            "setor"
-        ).annotate(
-            total_epis=Count("epis_vinculados"),
-        )
-
-        if query:
-            colaboradores_list = colaboradores_list.filter(
-                Q(nome__icontains=query)
-            )
-
-        if setor_id:
-            colaboradores_list = colaboradores_list.filter(setor_id=setor_id)
-
-        colaboradores_list = colaboradores_list.order_by("nome")
-    else:
-        # Se nenhum filtro for aplicado, não busca nenhum registro no banco
-        colaboradores_list = Colaborador.objects.none()
-
-    # Paginação ajustada para 20 itens por página
-    paginator = Paginator(colaboradores_list, 20)
-    page_number = request.GET.get("page")
-    colaboradores = paginator.get_page(page_number)
-
-    setores = Setor.objects.filter(ativo=True).order_by("nome")
-
-    return render(
-        request,
-        "core/status_epis.html",
-        {
-            "colaboradores": colaboradores,
-            "setores": setores,
-            "query": query,
-            "setor_selecionado": setor_id,
-            "tem_filtro": tem_filtro,
-        },
-    )
-
-
-@login_required
-def ficha_colaborador_epis(request, colaborador_id):
-    """Ficha do Colaborador mostrando todos os seus EPIs e status de troca."""
-    colaborador = get_object_or_404(
-        Colaborador.objects.select_related("setor"), pk=colaborador_id
-    )
-
-    registros = RegistroEpi.objects.filter(
-        colaborador=colaborador
-    ).select_related("epi")
-
-    form = RegistroEpiForm()
-
-    if request.method == "POST":
-        registro_id = request.POST.get("registro_id", "").strip()
-
-        # EDIÇÃO DE EPI JÁ ATRIBUÍDO
-        if registro_id:
-            registro = get_object_or_404(
-                RegistroEpi, pk=registro_id, colaborador=colaborador
-            )
-            form = RegistroEpiForm(request.POST, instance=registro)
-            if form.is_valid():
-                form.save()
-                messages.success(
-                    request,
-                    f'Entrega do EPI "{registro.epi.nome}" renovada com sucesso!',
-                )
-                return redirect("ficha_colaborador_epis", colaborador_id=colaborador.id)
-            else:
-                messages.error(request, "Erro ao renovar a entrega do EPI. Verifique os dados.")
-
-        # NOVO VÍNCULO DE EPI
-        else:
-            form = RegistroEpiForm(request.POST)
-            if form.is_valid():
-                novo_registro = form.save(commit=False)
-                novo_registro.colaborador = colaborador
-                novo_registro.save()
-                messages.success(request, "Novo EPI vinculado/entregue com sucesso!")
-                return redirect("ficha_colaborador_epis", colaborador_id=colaborador.id)
-            else:
-                messages.error(
-                    request,
-                    "Não foi possível vincular o EPI. Verifique se este EPI já não está atribuído ao colaborador ou se faltam informações.",
-                )
-
-    return render(
-        request,
-        "core/status_epi_usuario.html",
-        {
-            "colaborador": colaborador,
-            "registros": registros,
-            "form": form,
-        },
-    )
-
-@login_required
-@require_POST
-def deletar_registro_epi(request, colaborador_id, registro_id):
-    """Exclui o vínculo de um EPI específico do colaborador."""
-    colaborador = get_object_or_404(Colaborador, pk=colaborador_id)
-    registro = get_object_or_404(RegistroEpi, pk=registro_id, colaborador=colaborador)
-    
-    nome_epi = registro.epi.nome
-    registro.delete()
-    
-    messages.success(request, f'O EPI "{nome_epi}" foi removido do colaborador com sucesso.')
-    return redirect("ficha_colaborador_epis", colaborador_id=colaborador.id)
 
 
 # ============ EXTINTORES ===============
@@ -578,33 +395,3 @@ def editar_vistoria_extintor(request, extintor_id):
     messages.success(request, f"Vistoria do extintor Nº {extintor.numero} atualizada com sucesso!")
 
     return redirect(request.META.get("HTTP_REFERER", "inspecao_extintores"))
-
-
-# ============ GERADOR DE DOCUMENTOS =============
-
-@login_required
-def gerar_documentos(request):
-    if request.method == "POST":
-        planilha = request.FILES.get("planilha")
-        modelo = request.FILES.get("modelo")
-
-        if not planilha or not modelo:
-            messages.error(request, "Envie a planilha e o modelo.")
-        elif not planilha.name.lower().endswith((".xlsx", ".xls")):
-            messages.error(request, "A planilha precisa ser um arquivo Excel (.xlsx ou .xls).")
-        elif not modelo.name.lower().endswith(".docx"):
-            messages.error(request, "O modelo precisa ser um arquivo Word (.docx).")
-        else:
-            try:
-                zip_buffer = gerar_zip_documentos(planilha, modelo)
-            except Exception:
-                logger.exception("Erro ao gerar documentos")
-                messages.error(request, "Não foi possível processar os arquivos. Confira o formato da planilha e do modelo.")
-            else:
-                return FileResponse(
-                    zip_buffer,
-                    as_attachment=True,
-                    filename="documentos_gerados.zip",
-                )
-
-    return render(request, "core/gerar_documentos.html")

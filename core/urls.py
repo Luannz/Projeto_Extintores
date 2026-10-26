@@ -15,14 +15,6 @@ urlpatterns = [
 
     # == COLABORADORES ==
     path("colaboradores/",views.listar_colaboradores,name="listar_colaboradores"),
-    path("colaborador/<int:colaborador_id>/epi/<int:registro_id>/deletar/",views.deletar_registro_epi,name="deletar_registro_epi"),
-
-    # == EPIS ==
-    path("epis/", views.listar_epis, name="listar_epis"),
-
-    # == VINCULO EPIS == 
-    path("epis/status/", views.status_epis, name="status_epis"),
-    path("epis/colaborador/<int:colaborador_id>/",views.ficha_colaborador_epis,name="ficha_colaborador_epis"),
 
     # == EXTINTORES ==
     path('extintores/', views.listar_extintores, name='listar_extintores'),
@@ -31,9 +23,6 @@ urlpatterns = [
     
     path('extintores/inspecao/', views.inspecao_extintores, name='inspecao_extintores'),
     path('extintores/<int:extintor_id>/editar-vistoria/', views.editar_vistoria_extintor, name='editar_vistoria_extintor'),
-
-    # == GERADOR DOCUMDNOS ==
-    path("gerar-documentos/", views.gerar_documentos, name="gerar_documentos"),
 
 ]
 

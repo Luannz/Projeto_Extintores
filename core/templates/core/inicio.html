@@ -193,25 +193,7 @@
         </div>
     </div>
 
-    <!-- Pendências de EPIs -->
-    <div class="col-12 col-sm-6 col-xl-3">
-        <div class="stat-card">
-            <div class="d-flex align-items-center justify-content-between mb-2">
-                <span class="stat-label">Alertas de EPI</span>
-                <div class="stat-icon icon-rose">
-                    <i class="fas fa-hard-hat"></i>
-                </div>
-            </div>
-            <div class="d-flex align-items-baseline justify-content-between">
-                <p class="stat-value mb-0">{{ total_pendencias_epi|default:"0" }}</p>
-                <small class="{% if total_pendencias_epi > 0 %}text-danger{% else %}text-success{% endif %} fw-semibold">
-                    <i class="fas {% if total_pendencias_epi > 0 %}fa-exclamation-triangle{% else %}fa-check-circle{% endif %} me-1"></i>
-                    {% if total_pendencias_epi > 0 %}Pendente{% else %}Em dia{% endif %}
-                </small>
-            </div>
-        </div>
-    </div>
-
+    
     <!-- Pendências de Extintores -->
     <div class="col-12 col-sm-6 col-xl-3">
         <div class="stat-card">
@@ -360,111 +342,6 @@
 
 </div>
 
-
-<!-- ================= SEÇÃO 2: EQUIPAMENTOS DE PROTEÇÃO INDIVIDUAL (EPIs) ================= -->
-<div class="section-header-banner banner-epi">
-    <span><i class="fas fa-hard-hat me-2"></i>Controle de Equipamentos de Proteção Individual (EPIs)</span>
-    <a href="{% url 'status_epis' %}" class="btn btn-sm btn-outline-teal bg-white text-teal-700 border-teal-subtle fw-bold" style="color: #0f766e;">
-        Ver Fichas de EPIs <i class="fas fa-arrow-right ms-1"></i>
-    </a>
-</div>
-
-<div class="row g-4 mb-4">
-    
-    <!-- Painel de EPIs Vencidos -->
-    <div class="col-12 col-lg-6">
-        <div class="alert-card border-danger-subtle overflow-hidden">
-            <div class="alert-card-header d-flex align-items-center justify-content-between bg-danger-subtle bg-opacity-25">
-                <div class="d-flex align-items-center gap-2">
-                    <span class="badge bg-danger text-white p-2 rounded-3">
-                        <i class="fas fa-exclamation-circle fa-lg"></i>
-                    </span>
-                    <div>
-                        <h6 class="fw-bold m-0 text-dark">EPIs Vencidos</h6>
-                        <small class="text-muted fs-7">Substituição imediata necessária</small>
-                    </div>
-                </div>
-                <span class="badge bg-danger rounded-pill px-3 py-1 fs-7 fw-semibold">
-                    {{ epis_vencidos|length }}
-                </span>
-            </div>
-
-            <div class="p-3 flex-grow-1">
-                {% for r in epis_vencidos %}
-                    <a href="{% url 'ficha_colaborador_epis' r.colaborador.id %}" class="alert-item-link epi-item">
-                        <div class="d-flex align-items-center gap-2">
-                            <div class="rounded-circle bg-danger-subtle text-danger d-flex align-items-center justify-content-center" style="width:38px; height:38px; flex-shrink:0;">
-                                <i class="fas fa-user-shield fs-6"></i>
-                            </div>
-                            <div>
-                                <strong class="d-block text-dark small mb-0">{{ r.colaborador.nome }}</strong>
-                                <span class="text-muted fs-7"><i class="fas fa-hard-hat me-1 text-danger"></i>{{ r.epi.nome }} · <span class="text-slate-500">{{ r.colaborador.setor.nome }}</span></span>
-                            </div>
-                        </div>
-                        <div class="text-end">
-                            <span class="badge bg-danger text-white font-mono-date">
-                                Venceu {{ r.data_proxima_troca|date:"d/m/Y" }}
-                            </span>
-                        </div>
-                    </a>
-                {% empty %}
-                    <div class="text-center py-4 text-muted">
-                        <i class="fas fa-check-circle text-success fa-2x mb-2 d-block"></i>
-                        <span class="small fw-medium">Nenhum EPI vencido no momento.</span>
-                    </div>
-                {% endfor %}
-            </div>
-        </div>
-    </div>
-
-    <!-- Painel de EPIs Próximos de Vencer (Próximos 7 dias) -->
-    <div class="col-12 col-lg-6">
-        <div class="alert-card border-warning-subtle overflow-hidden">
-            <div class="alert-card-header d-flex align-items-center justify-content-between bg-warning-subtle bg-opacity-25">
-                <div class="d-flex align-items-center gap-2">
-                    <span class="badge bg-warning text-dark p-2 rounded-3">
-                        <i class="fas fa-clock fa-lg"></i>
-                    </span>
-                    <div>
-                        <h6 class="fw-bold m-0 text-dark">EPIs Próximos do Vencimento</h6>
-                        <small class="text-muted fs-7">Trocas previstas nos próximos 7 dias</small>
-                    </div>
-                </div>
-                <span class="badge bg-warning text-dark rounded-pill px-3 py-1 fs-7 fw-semibold">
-                    {{ epis_alerta|length }}
-                </span>
-            </div>
-
-            <div class="p-3 flex-grow-1">
-                {% for r in epis_alerta %}
-                    <a href="{% url 'ficha_colaborador_epis' r.colaborador.id %}" class="alert-item-link epi-item">
-                        <div class="d-flex align-items-center gap-2">
-                            <div class="rounded-circle bg-warning-subtle text-warning-emphasis d-flex align-items-center justify-content-center" style="width:38px; height:38px; flex-shrink:0;">
-                                <i class="fas fa-calendar-alt fs-6"></i>
-                            </div>
-                            <div>
-                                <strong class="d-block text-dark small mb-0">{{ r.colaborador.nome }}</strong>
-                                <span class="text-muted fs-7"><i class="fas fa-hard-hat me-1 text-warning-emphasis"></i>{{ r.epi.nome }} · <span class="text-slate-500">{{ r.colaborador.setor.nome }}</span></span>
-                            </div>
-                        </div>
-                        <div class="text-end">
-                            <span class="badge bg-warning text-dark font-mono-date">
-                                Troca {{ r.data_proxima_troca|date:"d/m/Y" }}
-                            </span>
-                        </div>
-                    </a>
-                {% empty %}
-                    <div class="text-center py-4 text-muted">
-                        <i class="fas fa-shield-check text-teal-600 fa-2x mb-2 d-block" style="color: #0f766e;"></i>
-                        <span class="small fw-medium">Nenhum EPI prestes a vencer nos próximos 7 dias.</span>
-                    </div>
-                {% endfor %}
-            </div>
-        </div>
-    </div>
-
-</div>
-
 <!-- Row 3: Card de Boas-Vindas e Ações Rápidas -->
 <div class="row">
     <div class="col-12">
@@ -491,9 +368,6 @@
                     </a>
                     <a href="{% url 'inspecao_extintores' %}" class="quick-action-btn">
                         <i class="fas fa-fire-extinguisher text-danger"></i> Extintores
-                    </a>
-                    <a href="{% url 'status_epis' %}" class="quick-action-btn">
-                        <i class="fas fa-hard-hat text-teal-600" style="color: #0f766e;"></i> Fichas de EPI
                     </a>
                     <a href="{% url 'listar_colaboradores' %}" class="quick-action-btn">
                         <i class="fas fa-id-card text-teal-600" style="color: #0f766e;"></i> Gerenciar Colaboradores

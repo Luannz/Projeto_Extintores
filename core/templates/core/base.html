@@ -486,10 +486,6 @@
                 <i class="fas fa-chart-pie"></i>
                 <span class="nav-text">Painel Geral</span>
             </a>
-            <a href="{% url 'gerar_documentos' %}" title="Gerar Documentos">
-                <i class="fas fa-solid fa-file-word"></i>
-                <span class="nav-text">Gerar Documentos</span>
-            </a>
 
             <div class="nav-label">Dep. Pessoal</div>
             <a href="{% url 'listar_colaboradores' %}" title="Colaboradores">
@@ -498,10 +494,6 @@
             </a>
 
             <div class="nav-label">Segurança (SST)</div>
-            <a href="{% url 'status_epis' %}" title="Entrega de EPIs">
-                <i class="fas fa-hard-hat"></i>
-                <span class="nav-text">Entrega de EPIs</span>
-            </a>
             <a href="{% url 'inspecao_extintores' %}" title="Inspeção de Extintores">
                 <i class="fas fa-calendar-check"></i>
                 <span class="nav-text">Manutenção Extintores</span>
@@ -515,10 +507,6 @@
             <a href="{% url 'listar_extintores' %}" title="Cadastrar Extintores">
                 <i class="fas fa-fire-extinguisher"></i>
                 <span class="nav-text">Cadastrar Extintores</span>
-            </a>
-            <a href="{% url 'listar_epis' %}" title="Cadastrar EPI's">
-                <i class="fas fa-shield-halved"></i>
-                <span class="nav-text">Cadastrar EPIs</span>
             </a>
         </nav>
 
@@ -560,10 +548,6 @@
         <a href="{% url 'inicio' %}" class="mobile-nav-item active">
             <i class="fas fa-house"></i>
             <span>Início</span>
-        </a>
-        <a href="{% url 'status_epis' %}" class="mobile-nav-item">
-            <i class="fas fa-hard-hat"></i>
-            <span>EPIs</span>
         </a>
         <a href="{% url 'listar_colaboradores' %}" class="mobile-nav-item">
             <i class="fas fa-id-card"></i>
