@@ -472,7 +472,7 @@
                     </div>
                     <div class="sidebar-brand-text">
                         <span class="sidebar-title">DP & SST</span>
-                        <span class="sidebar-subtitle">Gestão & Segurança</span>
+                        <span class="sidebar-subtitle">Gestão de Extintores</span>
                     </div>
                 </a>
             </div>
@@ -488,10 +488,6 @@
             </a>
 
             <div class="nav-label">Gerenciar</div>
-            <a href="{% url 'listar_colaboradores' %}" title="Colaboradores">
-                <i class="fas fa-id-card"></i>
-                <span class="nav-text">Colaboradores</span>
-            </a>
             <a href="{% url 'listar_empresas' %}" title="Empresas">
                 <i class="fas fa-building"></i>
                 <span class="nav-text">Empresas</span>
@@ -504,10 +500,6 @@
             </a>
 
             <div class="nav-label">Administração</div>
-            <a href="{% url 'listar_setores' %}" title="Setores">
-                <i class="fas fa-warehouse"></i>
-                <span class="nav-text">Setores</span>
-            </a>
             <a href="{% url 'listar_extintores' %}" title="Cadastrar Extintores">
                 <i class="fas fa-fire-extinguisher"></i>
                 <span class="nav-text">Cadastrar Extintores</span>
@@ -552,10 +544,6 @@
         <a href="{% url 'inicio' %}" class="mobile-nav-item active">
             <i class="fas fa-house"></i>
             <span>Início</span>
-        </a>
-        <a href="{% url 'listar_colaboradores' %}" class="mobile-nav-item">
-            <i class="fas fa-id-card"></i>
-            <span>Colaboradores</span>
         </a>
         <a href="{% url 'inspecao_extintores' %}" class="mobile-nav-item">
             <i class="fas fa-fire-extinguisher"></i>

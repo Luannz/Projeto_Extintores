@@ -14,8 +14,8 @@ from datetime import datetime, timedelta, date
 from django.http import FileResponse
 from django.forms import HiddenInput
 
-from .forms import RegistroUsuarioForm, SetorForm, ExtintorForm, ColaboradorForm, EmpresaForm
-from .models import Setor, Extintor, Usuario, Colaborador, Empresa
+from .forms import RegistroUsuarioForm, SetorForm, ExtintorForm, EmpresaForm
+from .models import Setor, Extintor, Usuario, Empresa
 
 import logging
 logger = logging.getLogger(__name__)
@@ -59,7 +59,6 @@ def cadastro_view(request):
 def inicio_view(request):
 
     setores = Setor.objects.annotate(total_extintores=Count('extintores')).order_by('nome')
-    colaboradores = Colaborador.objects.select_related('setor').order_by('nome')
     empresas = Empresa.objects.filter(ativo=True).order_by('nome')
 
     # Listas para separar na tela inicial
@@ -88,7 +87,6 @@ def inicio_view(request):
     return render(request,"core/inicio.html",{
             "empresas": empresas,
             "setores": setores,
-            "colaboradores": colaboradores,
             "extintores_vencidos": extintores_vencidos,
             "extintores_alerta": extintores_alerta,
             "total_pendencias_extintor": total_pendencias_extintor,
@@ -238,71 +236,6 @@ def listar_setores(request):
         'setores': setores,
         'form': form,
     })
-
-
-# ============= COLABORADORES ===============
-
-@login_required
-def listar_colaboradores(request):
-    colaboradores_list = (
-        Colaborador.objects.select_related("setor")
-        .order_by("nome")
-    )
-
-    #captura os parametros de busca GET que vem do template
-    busca = request.GET.get("busca","").strip()
-    setor_id = request.GET.get("setor", "").strip()
-
-    # aqui aplica os filtros SE tiver algum deles
-    if busca:
-        colaboradores_list = colaboradores_list.filter(
-            Q(nome__icontains=busca)
-        )
-
-    if setor_id:
-        colaboradores_list = colaboradores_list.filter(setor_id=setor_id)
-
-    form = ColaboradorForm(request.POST or None)
-    if request.method == "POST":
-        colaborador_id = request.POST.get("colaborador_id")
-        if colaborador_id:
-            # Edição
-            colaborador = get_object_or_404(Colaborador, pk=colaborador_id)
-            form_edit = ColaboradorForm(request.POST, instance=colaborador)
-            if form_edit.is_valid():
-                form_edit.save()
-                messages.success(
-                    request,
-                    f'Colaborador "{colaborador.nome}" atualizado com sucesso!',
-                )
-                return redirect("listar_colaboradores")
-        else:
-            # Criação
-            if form.is_valid():
-                form.save()
-                messages.success(
-                    request, "Colaborador cadastrado com sucesso!"
-                )
-                return redirect("listar_colaboradores")
-
-    paginator = Paginator(colaboradores_list, 10)
-    page_number = request.GET.get("page")
-    colaboradores = paginator.get_page(page_number)
-
-    setores = Setor.objects.filter(ativo=True).order_by("nome")
-    
-    return render(
-        request,
-        "core/colaboradores_lista.html",
-        {
-            "colaboradores": colaboradores,
-            "form": form,
-            "setores": setores,
-            "busca": busca,
-            "setor_selecionado": setor_id,
-        },
-    )
-
 
 # ============ EXTINTORES ===============
 

@@ -86,28 +86,6 @@ class Usuario(AbstractUser):
         verbose_name_plural = "Usuários"
 
 
-class Colaborador(models.Model):
-    nome = models.CharField(max_length=150, verbose_name="Nome Completo")
-    setor = models.ForeignKey(
-        Setor,
-        on_delete=models.PROTECT,
-        related_name="colaboradores",
-        verbose_name="Setor",
-    )
-
-    def __str__(self):
-        return f"{self.nome} - {self.setor.nome}"
-
-    @property
-    def possui_epi_vencido(self):
-        """Retorna True se o colaborador tiver ao menos 1 EPI vencido."""
-        return any(registro.status_troca == "VENCIDO" for registro in self.epis_vinculados.all())
-
-    @property
-    def total_epis_vencidos(self):
-        """Retorna a quantidade de EPIs vencidos."""
-        return sum(1 for registro in self.epis_vinculados.all() if registro.status_troca == "VENCIDO")
-
 class Extintor(models.Model):
     TIPOS_INCENDIO = [
         ("ABC", "ABC"),

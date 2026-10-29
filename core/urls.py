@@ -17,9 +17,6 @@ urlpatterns = [
     # == SETORES ==
     path('setores/', views.listar_setores, name='listar_setores'),
 
-    # == COLABORADORES ==
-    path("colaboradores/",views.listar_colaboradores,name="listar_colaboradores"),
-
     # == EXTINTORES ==
     path('extintores/', views.listar_extintores, name='listar_extintores'),
     path('extintores/novo/', views.cadastrar_extintor, name='cadastrar_extintor'),

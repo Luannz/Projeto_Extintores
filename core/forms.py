@@ -3,7 +3,7 @@
 from django import forms
 from django.forms import ClearableFileInput
 from django.contrib.auth.forms import UserCreationForm
-from .models import Usuario, Extintor, Setor, Colaborador, Empresa
+from .models import Usuario, Extintor, Setor, Empresa
 from django.core.validators import RegexValidator
 
 class MultipleFileInput(ClearableFileInput):
@@ -120,16 +120,6 @@ class SetorForm(forms.ModelForm):
             "codigo": "Código",
             "nome": "Nome do Setor",
             "ativo": "Setor Ativo",
-        }
-
-
-class ColaboradorForm(forms.ModelForm):
-    class Meta:
-        model = Colaborador
-        fields = ["nome", "setor"]
-        widgets = {
-            "nome": forms.TextInput(attrs={"class": "form-control"}),
-            "setor": forms.Select(attrs={"class": "form-select"}),
         }
 
 

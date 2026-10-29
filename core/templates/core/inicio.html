@@ -177,23 +177,6 @@
 <!-- Row 1: Cards de Métricas Principais -->
 <div class="row g-3 mb-4">
     
-    <!-- Colaboradores Ativos -->
-    <div class="col-12 col-sm-6 col-xl-3">
-        <div class="stat-card">
-            <div class="d-flex align-items-center justify-content-between mb-2">
-                <span class="stat-label">Colaboradores</span>
-                <div class="stat-icon icon-emerald">
-                    <i class="fas fa-id-card"></i>
-                </div>
-            </div>
-            <div class="d-flex align-items-baseline justify-content-between">
-                <p class="stat-value mb-0">{{ colaboradores|length|default:"0" }}</p>
-                <small class="text-success fw-semibold"><i class="fas fa-check-circle me-1"></i>Ativos</small>
-            </div>
-        </div>
-    </div>
-
-    
     <!-- Pendências de Extintores -->
     <div class="col-12 col-sm-6 col-xl-3">
         <div class="stat-card">
@@ -384,11 +367,7 @@
                     </a>
                     <a href="{% url 'inspecao_extintores' %}" class="quick-action-btn">
                         <i class="fas fa-fire-extinguisher text-danger"></i> Extintores
-                    </a>
-                    <a href="{% url 'listar_colaboradores' %}" class="quick-action-btn">
-                        <i class="fas fa-id-card text-teal-600" style="color: #0f766e;"></i> Gerenciar Colaboradores
-                    </a>
-                
+                    </a>     
                 </div>
 
             </div>
