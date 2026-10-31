@@ -117,7 +117,7 @@ def listar_empresas(request):
 
     busca = request.GET.get("busca", "").strip()
     if busca:
-        empresas_list = empresas_list.filter(Q(nome__icontains=busca) | Q(cnpj__icontains=busca))
+        empresas_list = empresas_list.filter(nome__icontains=busca)
 
     form = EmpresaForm()
     if request.method == "POST":
