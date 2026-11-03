@@ -1,63 +1,132 @@
 {% extends "core/base.html" %}
+
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h4 class="mb-0">Empresas</h4>
-  <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalEmpresa">
-    <i class="bi bi-plus-lg"></i> Nova empresa 
-  </button>
-</div>
+<div class="container-fluid py-3">
 
-<form method="get" class="mb-3">
-  <input type="text" name="busca" value="{{ busca }}" class="form-control" placeholder="Buscar por nome ...">
-</form>
+  {# Cabeçalho da Página e Botão de Ação #}
+  <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4 pb-3 border-bottom border-secondary border-opacity-25">
+    <div>
+      <div class="text-muted small text-uppercase mono">Gestão de Extintores</div>
+      <h3 class="text-dark display-font fw-bold mb-0">
+        <i class="fa-solid fa-building me-2 text-warning"></i>Empresas Cadastradas
+      </h3>
+    </div>
+    <div>
+      <button class="btn btn-signal btn-lg" data-bs-toggle="modal" data-bs-target="#modalEmpresa">
+        <i class="fa-solid fa-plus me-1"></i> Nova Empresa
+      </button>
+    </div>
+  </div>
 
-<div class="table-responsive">
-  <table class="table table-hover align-middle">
-    <thead>
-      <tr><th>Empresa</th><th class="text-center">Setores</th>
-          <th class="text-center">Extintores</th><th class="text-center">Vencidos</th><th></th></tr>
-    </thead>
-    <tbody>
-    {% for e in empresas %}
-      <tr>
-        <td>{{ e.nome }}{% if not e.ativo %} <span class="badge bg-secondary">Inativa</span>{% endif %}</td>
-        <td class="text-center">{{ e.total_setores }}</td>
-        <td class="text-center">{{ e.total_extintores }}</td>
-        <td class="text-center">
-          {% if e.total_vencidos %}<span class="badge bg-danger">{{ e.total_vencidos }}</span>{% else %}0{% endif %}
-        </td>
-        <td class="text-end"><a href="{% url 'detalhe_empresa' e.pk %}" class="btn btn-sm btn-outline-primary">Abrir</a></td>
-      </tr>
-    {% empty %}
-      <tr>
-        <td colspan="6" class="text-center text-muted py-4">
+  {# Barra de Busca e Filtros em Card #}
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-body bg-light rounded p-3">
+      <form method="get" class="row g-2 align-items-center">
+        <div class="col-12 col-md-10">
+          <div class="input-group">
+            <span class="input-group-text bg-white border-end-0 text-muted">
+              <i class="fa-solid fa-magnifying-glass"></i>
+            </span>
+            <input type="text" name="busca" value="{{ busca }}" class="form-control border-start-0 ps-0 shadow-none" placeholder="Buscar empresa por nome, CNPJ...">
+          </div>
+        </div>
+        <div class="col-12 col-md-2 d-flex gap-2">
+          <button type="submit" class="btn btn-primary w-100">Buscar</button>
           {% if busca %}
-            <i class="bi bi-search me-1"></i>
-            Nenhuma empresa corresponde à pesquisa "{{ busca }}".
-          {% else %}
-            Nenhuma empresa cadastrada.
+            <a href="{% url 'listar_empresas' %}" class="btn btn-outline-secondary" title="Limpar busca">
+              <i class="fa-solid fa-xmark"></i>
+            </a>
           {% endif %}
-        </td>
-      </tr>
-    {% endfor %}
-    </tbody>
-  </table>
-</div>
+        </div>
+      </form>
+    </div>
+  </div>
 
-<!-- Modal de cadastro -->
-<div class="modal fade" id="modalEmpresa" tabindex="-1">
-  <div class="modal-dialog modal-lg"><div class="modal-content">
-    <form method="post">{% csrf_token %}
-      <div class="modal-header"><h5 class="modal-title">Nova empresa</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-      <div class="modal-body">
-        {{ form.as_div }}
+  {# Card Principal da Tabela / Listagem #}
+  <div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th class="ps-4">Empresa</th>
+              <th class="text-center">Setores</th>
+              <th class="text-center">Extintores</th>
+              <th class="text-center">Vencidos</th>
+              <th class="text-end pe-4">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for e in empresas %}
+              <tr>
+                <td class="ps-4">
+                  <div class="fw-bold text-dark">{{ e.nome }}</div>
+                  {% if not e.ativo %}
+                    <span class="badge bg-secondary small mt-1">Inativa</span>
+                  {% endif %}
+                </td>
+                <td class="text-center">
+                  <span class="badge bg-light text-dark border px-2 py-1">{{ e.total_setores }}</span>
+                </td>
+                <td class="text-center">
+                  <span class="badge bg-light text-dark border px-2 py-1">{{ e.total_extintores }}</span>
+                </td>
+                <td class="text-center">
+                  {% if e.total_vencidos and e.total_vencidos > 0 %}
+                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1 fw-bold">
+                      {{ e.total_vencidos }}
+                    </span>
+                  {% else %}
+                    <span class="text-muted small">0</span>
+                  {% endif %}
+                </td>
+                <td class="text-end pe-4">
+                  <a href="{% url 'detalhe_empresa' e.pk %}" class="btn btn-sm btn-outline-secondary px-3">
+                    <i class="fa-solid fa-folder-open me-1"></i> Abrir
+                  </a>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="5" class="text-center py-5">
+                  <div class="text-muted">
+                    <i class="fa-solid fa-building-circle-exclamation fs-1 mb-2 text-secondary opacity-50 d-block"></i>
+                    {% if busca %}
+                      Nenhuma empresa corresponde à pesquisa "<strong>{{ busca }}</strong>".
+                    {% else %}
+                      Nenhuma empresa cadastrada no sistema.
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
       </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-        <button type="submit" class="btn btn-primary">Salvar</button>
+    </div>
+  </div>
+
+  {# Modal de Cadastro de Nova Empresa #}
+  <div class="modal fade" id="modalEmpresa" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content border-0 shadow">
+        <form method="post">
+          {% csrf_token %}
+          <div class="modal-header bg-light">
+            <h5 class="modal-title display-font fw-bold text-dark">Cadastrar Nova Empresa</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body p-4">
+            {{ form.as_p }}
+          </div>
+          <div class="modal-footer bg-light">
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-primary btn-sm px-4">Salvar Empresa</button>
+          </div>
+        </form>
       </div>
-    </form>
-  </div></div>
+    </div>
+  </div>
+
 </div>
 {% endblock %}

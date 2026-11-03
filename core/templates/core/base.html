@@ -448,9 +448,55 @@
         @media (min-width: 769px) {
             .mobile-bottom-nav { display: none !important; }
         }
+
+        /* Regra de pré-carregamento para forçar o estado colapsado instantaneamente */
+        html.preload-collapsed .sidebar { 
+            width: var(--sidebar-collapsed-width) !important; 
+            transition: none !important; 
+        }
+        html.preload-collapsed body { 
+            margin-left: var(--sidebar-collapsed-width) !important; 
+            transition: none !important; 
+        }
+        html.preload-collapsed .sidebar .sidebar-brand-wrapper,
+        html.preload-collapsed .sidebar .sidebar-user-info,
+        html.preload-collapsed .sidebar .sidebar-logout-btn,
+        html.preload-collapsed .sidebar .sidebar-nav a span.nav-text,
+        html.preload-collapsed .sidebar .nav-label {
+            opacity: 0 !important;
+            max-width: 0 !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+            margin: 0 !important;
+            overflow: hidden !important;
+            pointer-events: none !important;
+        }
+        html.preload-collapsed .sidebar .sidebar-header {
+            justify-content: center !important;
+            padding: 1.25rem 0 !important;
+        }
+        html.preload-collapsed .sidebar .sidebar-nav a {
+            justify-content: center !important;
+            padding: 0.7rem 0 !important;
+        }
+        html.preload-collapsed .sidebar .sidebar-footer {
+            justify-content: center !important;
+            padding: 1rem 0 !important;
+            gap: 0 !important;
+        }
     </style>
 
     {% block extra_css %}{% endblock %}
+
+
+<script>
+    // Lê o localStorage antes de desenhar qualquer coisa na tela
+    if (localStorage.getItem('dp-sidebar-collapsed') === 'true') {
+        document.documentElement.classList.add('preload-collapsed');
+    }
+</script>
+
+    
 </head>
 <body class="{% if not user.is_authenticated or request.resolver_match.url_name == 'login' %}no-sidebar{% endif %}">
 
@@ -463,6 +509,13 @@
 
     {% if user.is_authenticated and request.resolver_match.url_name != 'login' %}
     <aside class="sidebar" id="sidebar">
+        <script>
+            // Aplica a classe collapsed no aside imediatamente se estiver salvo
+            if (localStorage.getItem('dp-sidebar-collapsed') === 'true') {
+                document.getElementById('sidebar').classList.add('collapsed');
+                document.body.classList.add('sidebar-collapsed');
+            }
+        </script>
 
         <div class="sidebar-header">
             <div class="sidebar-brand-wrapper">
@@ -562,26 +615,15 @@
             const btnCollapse = document.getElementById('desktopCollapseBtn');
             const collapseIcon = document.getElementById('collapseIcon');
 
-            // Controle no Mobile
-            function abrirSidebar() {
-                sidebar.classList.add('sidebar-open');
-                overlay.classList.add('active');
-            }
-
-            function fecharSidebar() {
-                sidebar.classList.remove('sidebar-open');
-                overlay.classList.remove('active');
-            }
-
-            if (btnToggle) btnToggle.addEventListener('click', abrirSidebar);
-            if (overlay) overlay.addEventListener('click', fecharSidebar);
+            // Remove a classe de preload assim que o DOM carregar completamente
+            document.documentElement.classList.remove('preload-collapsed');
 
             // Controle no Desktop
             if (btnCollapse) {
                 if (localStorage.getItem('dp-sidebar-collapsed') === 'true') {
                     sidebar.classList.add('collapsed');
                     document.body.classList.add('sidebar-collapsed');
-                    collapseIcon.classList.replace('fa-chevron-left', 'fa-chevron-right');
+                    if (collapseIcon) collapseIcon.classList.replace('fa-chevron-left', 'fa-chevron-right');
                 }
 
                 btnCollapse.addEventListener('click', () => {
