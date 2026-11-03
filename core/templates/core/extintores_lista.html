@@ -46,28 +46,38 @@
           >
         </div>
 
-        <!-- Filtro por Setor -->
+        <!-- Filtro por Empresa -->
         <div class="col-md-4">
-          <label for="id_setor" class="form-label small fw-bold text-secondary">Setor</label>
-          <select name="setor" id="id_setor" class="form-select">
-            <option value="">Todos os Setores</option>
-            {% for setor in setores %}
-              <option value="{{ setor.id }}" {% if setor_filtro == setor.id|stringformat:"s" %}selected{% endif %}>
-                {{ setor.nome }}
-              </option>
+          <label for="filtroEmpresa" class="form-label small fw-bold text-secondary">Empresa</label>
+          <select name="empresa" id="filtroEmpresa" class="form-select">
+            <option value="">Selecione primeiro a empresa...</option>
+            {% for emp in empresas %}
+              <option value="{{ emp.pk }}" {% if emp.pk|stringformat:"s" == empresa_filtro %}selected{% endif %}>{{ emp.nome }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Filtro por Setor (Disponível apenas após selecionar a empresa) -->
+        <div class="col-md-3">
+          <label for="filtroSetor" class="form-label small fw-bold text-secondary">Setor</label>
+          <select name="setor" id="filtroSetor" class="form-select" {% if not empresa_filtro %}disabled{% endif %}>
+            <option value="">{% if empresa_filtro %}Todos os setores{% else %}Selecione uma empresa primeiro{% endif %}</option>
+            {% for s in setores %}
+              <option value="{{ s.pk }}" data-empresa="{{ s.empresa_id }}"
+                      {% if s.pk|stringformat:"s" == setor_filtro %}selected{% endif %}>{{ s.nome }}</option>
             {% endfor %}
           </select>
         </div>
 
         <!-- Botões de Ação -->
-        <div class="col-md-5 d-flex gap-2">
-          <button type="submit" class="btn btn-primary me-1">
+        <div class="col-md-2 d-flex gap-2">
+          <button type="submit" class="btn btn-primary w-100">
             <i class="fa-solid fa-magnifying-glass me-1"></i> Filtrar
           </button>
           
-          {% if setor_filtro or numero_filtro %}
-            <a href="{% url 'listar_extintores' %}" class="btn btn-outline-secondary">
-              <i class="fa-solid fa-xmark me-1"></i> Limpar
+          {% if setor_filtro or numero_filtro or empresa_filtro %}
+            <a href="{% url 'listar_extintores' %}" class="btn btn-outline-secondary" title="Limpar Filtros">
+              <i class="fa-solid fa-xmark"></i>
             </a>
           {% endif %}
         </div>
@@ -409,6 +419,62 @@
         modalImagem.show();
       });
     });
+  });
+
+  document.addEventListener("DOMContentLoaded", function () {
+    const emp = document.getElementById("filtroEmpresa");
+    const set = document.getElementById("filtroSetor");
+
+    function atualizarSetores() {
+      const empresaSelecionada = emp.value;
+
+      if (!empresaSelecionada) {
+        // Se nenhuma empresa estiver selecionada, bloqueia e limpa o setor
+        set.disabled = true;
+        set.value = "";
+        set.innerHTML = '<option value="">Selecione uma empresa primeiro</option>';
+      } else {
+        // Habilita o select de setores
+        set.disabled = false;
+        
+        let temOpcoes = false;
+        let htmlOptions = '<option value="">Todos os setores</option>';
+
+        // Percorre todas as opções originais guardadas ou filtra o dataset
+        Array.from(set.options).forEach(o => {
+          if (!o.value) return; // ignora a opção padrão vazia
+          const empresaIdDoSetor = o.getAttribute("data-empresa");
+          
+          if (empresaIdDoSetor === empresaSelecionada) {
+            const isSelected = o.selected ? 'selected' : '';
+            htmlOptions += `<option value="${o.value}" data-empresa="${empresaIdDoSetor}" ${isSelected}>${o.text}</option>`;
+            temOpcoes = true;
+          }
+        });
+
+        if (!temOpcoes) {
+          htmlOptions = '<option value="">Nenhum setor cadastrado para esta empresa</option>';
+        }
+
+        set.innerHTML = htmlOptions;
+      }
+    }
+
+    emp.addEventListener("change", function() {
+      // Quando mudar a empresa, reseta o valor do setor selecionado anteriormente
+      set.value = "";
+      atualizarSetores();
+    });
+
+    // Executa no carregamento caso já venha com empresa pré-selecionada da sessão/GET
+    if (emp.value) {
+      // Mantém a seleção atual do setor se houver, mas filtra apenas os válidos
+      const setorAtual = "{{ setor_filtro }}";
+      atualizarSetores();
+      if (setorAtual) {
+        set.value = setorAtual;
+      }
+    }
   });
 </script>
 {% endblock %}

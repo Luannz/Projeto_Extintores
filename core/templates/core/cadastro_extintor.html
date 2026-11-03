@@ -29,7 +29,8 @@
     <div class="card-body p-4">
       <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
-
+        <input type="hidden" name="next" value="{{ next }}">
+        
         <div class="row g-3">
           {# Número e Setor #}
           <div class="col-12 col-md-4">

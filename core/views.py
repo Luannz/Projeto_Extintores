@@ -8,11 +8,14 @@ from django.core.paginator import Paginator
 from django.utils import timezone
 from django.urls import reverse
 from django.http import JsonResponse
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.db import IntegrityError, transaction
 from django.db.models import Case, When, Value, IntegerField, Q, Max, F, Count, Sum
+from django.db.models.deletion import ProtectedError
 from datetime import datetime, timedelta, date
 from django.http import FileResponse
 from django.forms import HiddenInput
+
 
 from .forms import RegistroUsuarioForm, SetorForm, ExtintorForm, EmpresaForm
 from .models import Setor, Extintor, Usuario, Empresa
@@ -176,6 +179,10 @@ def detalhe_empresa(request, pk):
 
     extintores = Paginator(extintores_list, 15).get_page(request.GET.get("page"))
 
+    total_extintores = extintores_qs.count()
+    total_vencidos = extintores_qs.filter(data_vencimento__lt=hoje).count()
+    total_a_vencer = extintores_qs.filter(data_vencimento__range=(hoje, limite)).count()
+
     return render(request, "core/empresa_detalhe.html", {
         "empresa": empresa,
         "setores": setores,
@@ -183,9 +190,10 @@ def detalhe_empresa(request, pk):
         "setor_filtro": setor_filtro,
         "form_setor": form_setor,
         "hoje": hoje,
-        "total_extintores": extintores_qs.count(),
-        "total_vencidos": extintores_qs.filter(data_vencimento__lt=hoje).count(),
-        "total_a_vencer": extintores_qs.filter(data_vencimento__range=(hoje, limite)).count(),
+        "total_extintores": total_extintores,
+        "total_vencidos": total_vencidos,
+        "total_a_vencer": total_a_vencer,
+        "total_em_dia": total_extintores - total_vencidos - total_a_vencer,
     })
 
 
@@ -236,6 +244,48 @@ def listar_setores(request):
         'setores': setores,
         'form': form,
     })
+
+@login_required
+@require_POST
+def editar_setor(request, pk):
+    setor = get_object_or_404(Setor, pk=pk)
+
+    # Mantém o setor na mesma empresa, mesmo que o POST seja alterado
+    data = request.POST.copy()
+    data["empresa"] = setor.empresa_id
+
+    # Mesma regra que você já usa: não desativa setor com extintores
+    if "ativo" not in request.POST and setor.extintores.exists():
+        messages.error(
+            request,
+            f'Não é possível desativar o setor "{setor.nome}": ele tem {setor.extintores.count()} extintor(es).'
+        )
+        return redirect("detalhe_empresa", pk=setor.empresa_id)
+
+    form = SetorForm(data, instance=setor)
+    if form.is_valid():
+        form.save()
+        messages.success(request, f'Setor "{setor.nome}" atualizado com sucesso!')
+    else:
+        erros = "; ".join(msg for lista in form.errors.values() for msg in lista)
+        messages.error(request, f"Não foi possível salvar o setor: {erros}")
+    return redirect("detalhe_empresa", pk=setor.empresa_id)
+
+
+@login_required
+@require_POST
+def deletar_setor(request, pk):
+    setor = get_object_or_404(Setor, pk=pk)
+    empresa_id, nome = setor.empresa_id, setor.nome
+    try:
+        setor.delete()
+        messages.success(request, f'Setor "{nome}" excluído com sucesso!')
+    except ProtectedError:
+        messages.error(
+            request,
+            f'Não é possível excluir "{nome}": há extintores, colaboradores ou usuários vinculados a ele.'
+        )
+    return redirect("detalhe_empresa", pk=empresa_id)
 
 # ============ EXTINTORES ===============
 
@@ -298,25 +348,31 @@ def listar_extintores(request):
         "empresas": empresas,
         'setor_filtro': setor_filtro,
         'numero_filtro': numero_filtro,
+        'empresa_filtro': empresa_filtro,
         'form': form
     })
 
 
 def cadastrar_extintor(request):
-    """
-    View responsável exclusivamente pela exibição e processamento
-    do formulário de criação de um novo extintor.
-    """
+    next_url = request.GET.get("next") or request.POST.get("next") or ""
+    if not url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
+        next_url = ""
+
     if request.method == 'POST':
         form = ExtintorForm(request.POST, request.FILES)
         if form.is_valid():
             extintor = form.save()
             messages.success(request, f'Extintor Nº "{extintor.numero}" cadastrado com sucesso!')
-            return redirect('listar_extintores')
+            return redirect(next_url or 'listar_extintores')
     else:
-        form = ExtintorForm()
+        initial = {}
+        if request.GET.get("empresa"):
+            initial["empresa"] = request.GET["empresa"]
+        if request.GET.get("setor"):
+            initial["setor"] = request.GET["setor"]
+        form = ExtintorForm(initial=initial)
 
-    return render(request, 'core/cadastro_extintor.html', {'form': form})
+    return render(request, 'core/cadastro_extintor.html', {'form': form, 'next': next_url})
 
 
 @require_POST
@@ -404,6 +460,7 @@ def inspecao_extintores(request):
             "empresas": Empresa.objects.filter(ativo=True),
             # Filtros mantidos no contexto para preencher os selects no HTML
             "setor_atual": setor_filtro,
+            "empresa_filtro": empresa_filtro, 
             "situacao_atual": situacao_filtro,
             "vencimento_atual": vencimento_filtro,
             "vistoria_atual": vistoria_filtro,

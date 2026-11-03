@@ -16,6 +16,8 @@ urlpatterns = [
 
     # == SETORES ==
     path('setores/', views.listar_setores, name='listar_setores'),
+    path('setores/<int:pk>/editar/', views.editar_setor, name='editar_setor'),
+    path('setores/<int:pk>/deletar/', views.deletar_setor, name='deletar_setor'),
 
     # == EXTINTORES ==
     path('extintores/', views.listar_extintores, name='listar_extintores'),

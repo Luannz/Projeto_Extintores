@@ -108,20 +108,27 @@
 
             <!-- Container dos Filtros -->
             <div class="collapse d-md-block" id="collapseFiltros">
-                <form method="GET" action="{% url 'inspecao_extintores' %}" class="row g-2 g-md-3">
+                <form method="GET" action="{% url 'inspecao_extintores' %}" class="row g-2 g-md-3 align-items-end">
                     
+                    <!-- Coluna 1: Empresa e Setor (Agrupados) -->
                     <div class="col-12 col-sm-6 col-lg-3">
-                        <label class="form-label small fw-semibold text-muted mb-1">Setor</label>
-                        <select name="setor" class="form-select form-select-sm" onchange="this.form.submit()">
-                            <option value="">Todos os Setores</option>
+                        <label class="form-label small fw-semibold text-muted mb-1">Empresa / Setor</label>
+                        <select name="empresa" id="filtroEmpresa" class="form-select form-select-sm mb-1">
+                            <option value="">Selecione primeiro a empresa...</option>
+                            {% for emp in empresas %}
+                                <option value="{{ emp.pk }}" {% if emp.pk|stringformat:"s" == empresa_filtro %}selected{% endif %}>{{ emp.nome }}</option>
+                            {% endfor %}
+                        </select>
+                        <select name="setor" id="filtroSetor" class="form-select form-select-sm" {% if not empresa_filtro %}disabled{% endif %}>
+                            <option value="">{% if empresa_filtro %}Todos os setores{% else %}Selecione uma empresa primeiro{% endif %}</option>
                             {% for s in setores %}
-                                <option value="{{ s.id }}" {% if setor_atual == s.id|stringformat:"s" %}selected{% endif %}>
-                                    {{ s.nome }}
-                                </option>
+                                <option value="{{ s.pk }}" data-empresa="{{ s.empresa_id }}"
+                                        {% if s.pk|stringformat:"s" == setor_filtro %}selected{% endif %}>{{ s.nome }}</option>
                             {% endfor %}
                         </select>
                     </div>
 
+                    <!-- Coluna 2: Situação -->
                     <div class="col-12 col-sm-6 col-lg-3">
                         <label class="form-label small fw-semibold text-muted mb-1">Situação</label>
                         <select name="situacao" class="form-select form-select-sm" onchange="this.form.submit()">
@@ -133,6 +140,7 @@
                         </select>
                     </div>
 
+                    <!-- Coluna 3: Vencimento Carga -->
                     <div class="col-12 col-sm-6 col-lg-2">
                         <label class="form-label small fw-semibold text-muted mb-1">Vencimento Carga</label>
                         <select name="vencimento" class="form-select form-select-sm" onchange="this.form.submit()">
@@ -145,6 +153,7 @@
                         </select>
                     </div>
 
+                    <!-- Coluna 4: Última Vistoria -->
                     <div class="col-12 col-sm-6 col-lg-2">
                         <label class="form-label small fw-semibold text-muted mb-1">Última Vistoria</label>
                         <select name="vistoria" class="form-select form-select-sm" onchange="this.form.submit()">
@@ -155,7 +164,11 @@
                         </select>
                     </div>
 
-                    <div class="col-12 col-lg-2 d-flex align-items-end mt-2 mt-lg-0">
+                    <!-- Coluna 5: Botões de Ação -->
+                    <div class="col-12 col-lg-2 d-flex align-items-end gap-1 mt-2 mt-lg-0">
+                        <button type="submit" class="btn btn-sm btn-primary w-100 fw-semibold">
+                            <i class="fas fa-search me-1"></i> Filtrar
+                        </button>
                         <a href="{% url 'inspecao_extintores' %}" class="btn btn-sm btn-light border text-muted w-100 fw-semibold">
                             <i class="fas fa-eraser me-1"></i> Limpar
                         </a>
@@ -447,6 +460,60 @@
 
 {% block extra_js %}
 <script>
+document.addEventListener("DOMContentLoaded", function () {
+    const emp = document.getElementById("filtroEmpresa");
+    const set = document.getElementById("filtroSetor");
+
+    function atualizarSetores() {
+        const empresaSelecionada = emp.value;
+
+        if (!empresaSelecionada) {
+            set.disabled = true;
+            set.value = "";
+            set.innerHTML = '<option value="">Selecione uma empresa primeiro</option>';
+        } else {
+            set.disabled = false;
+            let temOpcoes = false;
+            let htmlOptions = '<option value="">Todos os setores</option>';
+
+            // Mapeia todas as opções de setores originais (caso precise filtrar dinamicamente sem perder a ref)
+            // Se você já carrega todas no HTML do select, podemos apenas alterar o atributo 'hidden'/'disabled'
+            Array.from(set.options).forEach(o => {
+                if (!o.value) return;
+                const empresaIdDoSetor = o.getAttribute("data-empresa");
+                
+                if (empresaIdDoSetor === empresaSelecionada) {
+                    const isSelected = o.selected ? 'selected' : '';
+                    htmlOptions += `<option value="${o.value}" data-empresa="${empresaIdDoSetor}" ${isSelected}>${o.text}</option>`;
+                    temOpcoes = true;
+                }
+            });
+
+            if (!temOpcoes) {
+                htmlOptions = '<option value="">Nenhum setor cadastrado para esta empresa</option>';
+            }
+
+            set.innerHTML = htmlOptions;
+        }
+    }
+
+    if (emp) {
+        emp.addEventListener("change", function() {
+            set.value = "";
+            atualizarSetores();
+        });
+
+        // Executa ao carregar caso venha com valor pré-selecionado na sessão/GET
+        if (emp.value) {
+            const setorAtual = "{{ setor_filtro }}";
+            atualizarSetores();
+            if (setorAtual) {
+                set.value = setorAtual;
+            }
+        }
+    }
+});
+
 function abrirModalEdicao(id, numero, dataVistoria, situacao, dataVencimento) {
     // Define a URL do formulário dinamicamente
     document.getElementById('formEditarExtintor').action = `/extintores/${id}/editar-vistoria/`;
