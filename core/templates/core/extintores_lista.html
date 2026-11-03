@@ -425,55 +425,65 @@
     const emp = document.getElementById("filtroEmpresa");
     const set = document.getElementById("filtroSetor");
 
+    if (!emp || !set) return;
+
+    // Salva uma cópia de todas as opções de setores originais em memória
+    const todasOpcoesSetor = Array.from(set.options);
+
     function atualizarSetores() {
       const empresaSelecionada = emp.value;
 
+      // Limpa o select de setores
+      set.innerHTML = '';
+
       if (!empresaSelecionada) {
-        // Se nenhuma empresa estiver selecionada, bloqueia e limpa o setor
         set.disabled = true;
         set.value = "";
-        set.innerHTML = '<option value="">Selecione uma empresa primeiro</option>';
+        const optPadrao = document.createElement('option');
+        optPadrao.value = "";
+        optPadrao.text = "Selecione uma empresa primeiro";
+        set.appendChild(optPadrao);
       } else {
-        // Habilita o select de setores
         set.disabled = false;
         
-        let temOpcoes = false;
-        let htmlOptions = '<option value="">Todos os setores</option>';
+        // Adiciona a opção padrão "Todos os setores"
+        const optTodos = document.createElement('option');
+        optTodos.value = "";
+        optTodos.text = "Todos os setores";
+        set.appendChild(optTodos);
 
-        // Percorre todas as opções originais guardadas ou filtra o dataset
-        Array.from(set.options).forEach(o => {
-          if (!o.value) return; // ignora a opção padrão vazia
+        let temOpcoes = false;
+        const setorAtual = "{{ setor_filtro }}";
+
+        // Filtra e reinsere apenas os setores correspondentes à empresa selecionada
+        todasOpcoesSetor.forEach(o => {
+          if (!o.value) return;
           const empresaIdDoSetor = o.getAttribute("data-empresa");
           
           if (empresaIdDoSetor === empresaSelecionada) {
-            const isSelected = o.selected ? 'selected' : '';
-            htmlOptions += `<option value="${o.value}" data-empresa="${empresaIdDoSetor}" ${isSelected}>${o.text}</option>`;
+            const novaOpcao = o.cloneNode(true);
+            if (novaOpcao.value === setorAtual) {
+              novaOpcao.selected = true;
+            }
+            set.appendChild(novaOpcao);
             temOpcoes = true;
           }
         });
 
         if (!temOpcoes) {
-          htmlOptions = '<option value="">Nenhum setor cadastrado para esta empresa</option>';
+          set.innerHTML = '<option value="">Nenhum setor cadastrado para esta empresa</option>';
         }
-
-        set.innerHTML = htmlOptions;
       }
     }
 
     emp.addEventListener("change", function() {
-      // Quando mudar a empresa, reseta o valor do setor selecionado anteriormente
       set.value = "";
       atualizarSetores();
     });
 
-    // Executa no carregamento caso já venha com empresa pré-selecionada da sessão/GET
+    // Executa no carregamento caso venha com empresa pré-selecionada via GET
     if (emp.value) {
-      // Mantém a seleção atual do setor se houver, mas filtra apenas os válidos
-      const setorAtual = "{{ setor_filtro }}";
       atualizarSetores();
-      if (setorAtual) {
-        set.value = setorAtual;
-      }
     }
   });
 </script>
@@ -526,7 +536,7 @@
       color: #ffffff;
       border: none;
       border-radius: 8px;
-      padding: 0.5rem 1rem;
+      padding: 0.5rem 1.25rem;
       font-weight: 600;
       font-size: 0.875rem;
       transition: all 0.2s ease;

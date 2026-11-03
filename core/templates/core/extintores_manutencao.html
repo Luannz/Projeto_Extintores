@@ -464,36 +464,52 @@ document.addEventListener("DOMContentLoaded", function () {
     const emp = document.getElementById("filtroEmpresa");
     const set = document.getElementById("filtroSetor");
 
+    // Salva cópia de todas as opções originais de setores na primeira carga
+    const todasOpcoesSetor = Array.from(set.options);
+
     function atualizarSetores() {
         const empresaSelecionada = emp.value;
+
+        // Limpa o select de setores mantendo apenas a primeira opção padrão
+        set.innerHTML = '';
 
         if (!empresaSelecionada) {
             set.disabled = true;
             set.value = "";
-            set.innerHTML = '<option value="">Selecione uma empresa primeiro</option>';
+            const optPadrao = document.createElement('option');
+            optPadrao.value = "";
+            optPadrao.text = "Selecione uma empresa primeiro";
+            set.appendChild(optPadrao);
         } else {
             set.disabled = false;
-            let temOpcoes = false;
-            let htmlOptions = '<option value="">Todos os setores</option>';
+            
+            // Adiciona a opção "Todos os setores"
+            const optTodos = document.createElement('option');
+            optTodos.value = "";
+            optTodos.text = "Todos os setores";
+            set.appendChild(optTodos);
 
-            // Mapeia todas as opções de setores originais (caso precise filtrar dinamicamente sem perder a ref)
-            // Se você já carrega todas no HTML do select, podemos apenas alterar o atributo 'hidden'/'disabled'
-            Array.from(set.options).forEach(o => {
+            let temOpcoes = false;
+            const setorAtual = "{{ setor_filtro }}";
+
+            // Filtra e reinseri apenas os setores pertencentes à empresa selecionada
+            todasOpcoesSetor.forEach(o => {
                 if (!o.value) return;
                 const empresaIdDoSetor = o.getAttribute("data-empresa");
                 
                 if (empresaIdDoSetor === empresaSelecionada) {
-                    const isSelected = o.selected ? 'selected' : '';
-                    htmlOptions += `<option value="${o.value}" data-empresa="${empresaIdDoSetor}" ${isSelected}>${o.text}</option>`;
+                    const novaOpcao = o.cloneNode(true);
+                    if (novaOpcao.value === setorAtual) {
+                        novaOpcao.selected = true;
+                    }
+                    set.appendChild(novaOpcao);
                     temOpcoes = true;
                 }
             });
 
             if (!temOpcoes) {
-                htmlOptions = '<option value="">Nenhum setor cadastrado para esta empresa</option>';
+                set.innerHTML = '<option value="">Nenhum setor cadastrado para esta empresa</option>';
             }
-
-            set.innerHTML = htmlOptions;
         }
     }
 
@@ -505,39 +521,27 @@ document.addEventListener("DOMContentLoaded", function () {
 
         // Executa ao carregar caso venha com valor pré-selecionado na sessão/GET
         if (emp.value) {
-            const setorAtual = "{{ setor_filtro }}";
             atualizarSetores();
-            if (setorAtual) {
-                set.value = setorAtual;
-            }
         }
     }
 });
 
 function abrirModalEdicao(id, numero, dataVistoria, situacao, dataVencimento) {
-    // Define a URL do formulário dinamicamente
     document.getElementById('formEditarExtintor').action = `/extintores/${id}/editar-vistoria/`;
-    
-    // Preenche os campos do modal
     document.getElementById('modalNumeroExtintor').innerText = `#${numero}`;
     document.getElementById('inputDataVistoria').value = dataVistoria || '';
     document.getElementById('selectSituacao').value = situacao || 'OK';
-    
-    // Preenche a Data de Vencimento recebida
     document.getElementById('modal_data_vencimento').value = dataVencimento || '';
 
-    // Instancia e abre o modal Bootstrap
     const modal = new bootstrap.Modal(document.getElementById('modalEditarExtintor'));
     modal.show();
 }
 
-// Preenche a data da última vistoria com a data atual
 function setarDataHoje() {
     const hoje = new Date().toISOString().split('T')[0];
     document.getElementById('inputDataVistoria').value = hoje;
 }
 
-// Listener para o botão "+1 Ano" no Vencimento
 document.addEventListener('DOMContentLoaded', function() {
     const btnMaisUmAno = document.getElementById('btnMaisUmAno');
     
@@ -545,7 +549,6 @@ document.addEventListener('DOMContentLoaded', function() {
         btnMaisUmAno.addEventListener('click', function() {
             const inputVenc = document.getElementById('modal_data_vencimento');
             
-            // Pega a data informada no input ou a data de hoje
             let baseDate = inputVenc && inputVenc.value 
                 ? new Date(inputVenc.value + 'T00:00:00') 
                 : new Date();
@@ -553,7 +556,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const diaOriginal = baseDate.getDate();
             baseDate.setFullYear(baseDate.getFullYear() + 1);
 
-            // Tratamento especial para 29/Fev em anos bissextos
             if (baseDate.getDate() !== diaOriginal) {
                 baseDate.setDate(0); 
             }
