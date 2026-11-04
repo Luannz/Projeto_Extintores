@@ -94,9 +94,16 @@
                   {% endif %}
                 </td>
                 <td class="text-end pe-3">
-                  <a href="?setor={{ s.pk }}" class="btn btn-sm btn-outline-secondary">
-                    <i class="fa-solid fa-filter me-1"></i> Filtrar Setor
-                  </a>
+                  <div class="d-flex justify-content-end align-items-center gap-1">
+                    {# Botão de Filtrar #}
+                    <a href="?setor={{ s.pk }}" class="btn btn-sm btn-outline-secondary" title="Filtrar Extintores deste Setor">
+                      <i class="fa-solid fa-filter"></i>
+                    </a>
+                    {# Botão que abre o modal de edição do setor #}
+                    <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalEditarSetor{{ s.pk }}" title="Editar Setor">
+                      <i class="fa-solid fa-pen-to-square"></i>
+                    </button>
+                  </div>
                 </td>
               </tr>
             {% empty %}
@@ -111,6 +118,59 @@
       </div>
     </div>
   </div>
+
+  {# ===== MODAIS DE EDIÇÃO PARA CADA SETOR ===== #}
+  {% for s in setores %}
+  <div class="modal fade" id="modalEditarSetor{{ s.pk }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content border-0 shadow">
+        
+        <div class="modal-header bg-light">
+          <h5 class="modal-title fw-bold text-dark">Editar Setor: {{ s.nome }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        {# Formulário de Edição #}
+        <form method="POST" action="{% url 'editar_setor' s.pk %}">
+          {% csrf_token %}
+          <div class="modal-body p-4 text-start">
+            
+            <div class="mb-3">
+              <label class="form-label small fw-bold text-secondary">Nome do Setor</label>
+              <input type="text" name="nome" value="{{ s.nome }}" class="form-control" required>
+            </div>
+
+            <div class="form-check form-switch mb-3">
+              <input class="form-check-input" type="checkbox" name="ativo" id="ativoSetor{{ s.pk }}" {% if s.ativo %}checked{% endif %}>
+              <label class="form-check-label small fw-semibold text-secondary" for="ativoSetor{{ s.pk }}">
+                Setor Ativo
+              </label>
+            </div>
+
+          </div>
+
+          <div class="modal-footer bg-light d-flex justify-content-between">
+            {# Botão de Excluir Integrado no Rodapé do Modal #}
+            <button type="submit" form="formDeletarSetor{{ s.pk }}" class="btn btn-outline-danger btn-sm" onclick="return confirm('Tem certeza que deseja excluir o setor {{ s.nome }}?');">
+              <i class="fa-solid fa-trash-can me-1"></i> Excluir Setor
+            </button>
+
+            <div>
+              <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+              <button type="submit" class="btn btn-primary btn-sm px-4">Salvar Alterações</button>
+            </div>
+          </div>
+        </form>
+
+        {# Formulário isolado para a exclusão (acionado via atributo form no botão acima) #}
+        <form id="formDeletarSetor{{ s.pk }}" method="POST" action="{% url 'deletar_setor' s.pk %}">
+          {% csrf_token %}
+        </form>
+
+      </div>
+    </div>
+  </div>
+  {% endfor %}
 
   {# Seção de Extintores #}
   <div class="card border-0 shadow-sm">
