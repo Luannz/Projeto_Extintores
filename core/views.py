@@ -388,75 +388,85 @@ def deletar_extintor(request, pk):
     return redirect('listar_extintores')
 
 
+@login_required
 def inspecao_extintores(request):
     hoje = timezone.localdate()
 
-    # Pega a lista base com otimização
-    extintores_list = Extintor.objects.select_related("setor")
-    # ===== FILTROS =====
-
-    # Setor
-    setor_filtro = request.GET.get("setor")
-    if setor_filtro:
-        extintores_list = extintores_list.filter(setor_id=setor_filtro)
-
-    # Empresa
+    # Captura os parâmetros de filtro da URL
     empresa_filtro = request.GET.get("empresa", "").strip()
-    if empresa_filtro:
-        extintores_list = extintores_list.filter(setor__empresa_id=empresa_filtro)
-
-    # Situação
+    setor_filtro = request.GET.get("setor")
+    
+    # Define valores padrão para evitar erros de variável não associada
     situacao_filtro = request.GET.get("situacao")
-    if situacao_filtro:
-        extintores_list = extintores_list.filter(situacao=situacao_filtro)
-
-    # Vencimento
     vencimento_filtro = request.GET.get("vencimento")
-    if vencimento_filtro == "vencidos":
-        extintores_list = extintores_list.filter(data_vencimento__lt=hoje)
-    elif vencimento_filtro == "30":
-        extintores_list = extintores_list.filter(
-            data_vencimento__range=(hoje, hoje + timedelta(days=30))
-        )
-    elif vencimento_filtro == "60":
-        extintores_list = extintores_list.filter(
-            data_vencimento__range=(hoje, hoje + timedelta(days=60))
-        )
-    elif vencimento_filtro == "90":
-        extintores_list = extintores_list.filter(
-            data_vencimento__range=(hoje, hoje + timedelta(days=90))
-        )
-    elif vencimento_filtro == "em_dia":
-        extintores_list = extintores_list.filter(data_vencimento__gt=hoje)
-
-    # Data da última vistoria
     vistoria_filtro = request.GET.get("vistoria")
-    if vistoria_filtro and vistoria_filtro.isdigit():
-        dias = int(vistoria_filtro)
-        limite = hoje - timedelta(days=dias)
-        extintores_list = extintores_list.filter(data_vistoria__lte=limite)
-
-    # Ordenação (opcional, igual ao dashboard)
     ordem_filtro = request.GET.get("ordem", "numero")
-    extintores_list = extintores_list.order_by(ordem_filtro)
 
-    if ordem_filtro == "numero":
-        extintores_list = extintores_list.order_by("numero")
+    # REGRA: Se nenhuma empresa foi selecionada, iniciamos com queryset vazio (.none())
+    if not empresa_filtro:
+        extintores_list = Extintor.objects.none()
     else:
-        # Aplica o filtro escolhido e usa o número como desempate
-        extintores_list = extintores_list.order_by(ordem_filtro, "numero")
+        # Pega a lista base otimizada filtrando pela empresa através do setor
+        extintores_list = Extintor.objects.select_related("setor__empresa").filter(
+            setor__empresa_id=empresa_filtro
+        )
+
+        # Se houver um setor específico selecionado, filtra por ele também
+        if setor_filtro:
+            extintores_list = extintores_list.filter(setor_id=setor_filtro)
+
+        # ===== OUTROS FILTROS (Aplicados apenas se houver empresa selecionada) =====
+
+        # Situação
+        if situacao_filtro:
+            extintores_list = extintores_list.filter(situacao=situacao_filtro)
+
+        # Vencimento
+        if vencimento_filtro == "vencidos":
+            extintores_list = extintores_list.filter(data_vencimento__lt=hoje)
+        elif vencimento_filtro == "30":
+            extintores_list = extintores_list.filter(
+                data_vencimento__range=(hoje, hoje + timedelta(days=30))
+            )
+        elif vencimento_filtro == "60":
+            extintores_list = extintores_list.filter(
+                data_vencimento__range=(hoje, hoje + timedelta(days=60))
+            )
+        elif vencimento_filtro == "90":
+            extintores_list = extintores_list.filter(
+                data_vencimento__range=(hoje, hoje + timedelta(days=90))
+            )
+        elif vencimento_filtro == "em_dia":
+            extintores_list = extintores_list.filter(data_vencimento__gt=hoje)
+
+        # Data da última vistoria
+        if vistoria_filtro and vistoria_filtro.isdigit():
+            dias = int(vistoria_filtro)
+            limite = hoje - timedelta(days=dias)
+            extintores_list = extintores_list.filter(data_vistoria__lte=limite)
+
+        # Ordenação
+        if ordem_filtro == "numero":
+            extintores_list = extintores_list.order_by("numero")
+        else:
+            extintores_list = extintores_list.order_by(ordem_filtro, "numero")
 
     # ===== PAGINAÇÃO =====
     paginator = Paginator(extintores_list, 20)  # 20 extintores por página
     page_number = request.GET.get("page")
     extintores_paginados = paginator.get_page(page_number)
 
+    # Carrega os setores dinamicamente: se a empresa estiver selecionada, traz apenas os dela; senão, traz todos
+    setores_queryset = Setor.objects.filter(ativo=True)
+    if empresa_filtro:
+        setores_queryset = setores_queryset.filter(empresa_id=empresa_filtro)
+
     return render(
         request,
         "core/extintores_manutencao.html",
         {
             "extintores": extintores_paginados,
-            "setores": Setor.objects.filter(ativo=True),
+            "setores": setores_queryset,
             "empresas": Empresa.objects.filter(ativo=True),
             # Filtros mantidos no contexto para preencher os selects no HTML
             "setor_atual": setor_filtro,

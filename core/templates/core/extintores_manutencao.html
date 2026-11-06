@@ -332,12 +332,16 @@
                         </td>
                     </tr>
                     {% empty %}
-                    <tr>
-                        <td colspan="7" class="text-center py-5 text-muted">
-                            <i class="fas fa-search fa-2x mb-3 text-secondary opacity-50"></i>
-                            <p class="m-0 fw-medium">Nenhum extintor encontrado para os filtros selecionados.</p>
-                        </td>
-                    </tr>
+                        <tr>
+                            <td colspan="7" class="text-center py-5 text-muted">
+                                <i class="fas fa-search fa-2x mb-3 text-secondary opacity-50"></i>
+                                {% if not empresa_filtro %}
+                                    <p class="m-0 fw-medium">Selecione uma empresa acima para visualizar os extintores.</p>
+                                {% else %}
+                                    <p class="m-0 fw-medium">Nenhum extintor encontrado para os filtros selecionados.</p>
+                                {% endif %}
+                            </td>
+                        </tr>
                     {% endfor %}
                 </tbody>
             </table>
