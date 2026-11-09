@@ -618,7 +618,20 @@
             // Remove a classe de preload assim que o DOM carregar completamente
             document.documentElement.classList.remove('preload-collapsed');
 
-            // Controle no Desktop
+            // --- CONTROLE NO MOBILE (Abrir/Fechar Menu Lateral) ---
+            if (btnToggle && sidebar && overlay) {
+                btnToggle.addEventListener('click', () => {
+                    sidebar.classList.toggle('sidebar-open');
+                    overlay.classList.toggle('active');
+                });
+
+                overlay.addEventListener('click', () => {
+                    sidebar.classList.remove('sidebar-open');
+                    overlay.classList.remove('active');
+                });
+            }
+
+            // Controle no Desktop (Recolher/Expandir)
             if (btnCollapse) {
                 if (localStorage.getItem('dp-sidebar-collapsed') === 'true') {
                     sidebar.classList.add('collapsed');

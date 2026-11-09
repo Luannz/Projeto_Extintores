@@ -22,34 +22,34 @@
           </span>
         {% endif %}
         
-        <a href="{% url 'cadastrar_extintor' %}" class="btn-sst-primary">
+        <a href="{% url 'cadastrar_extintor' %}" class="btn-sst-primary shadow-sm">
             <i class="fa-solid fa-plus"></i> Novo Extintor
         </a>
     </div>
   </div>
 
   <!-- Bloco de Filtros -->
-  <div class="card shadow-sm mb-4 border-0">
-    <div class="card-body bg-light rounded">
+  <div class="card shadow-sm mb-4 border-0 rounded-4 overflow-hidden">
+    <div class="card-body bg-white p-3 p-md-4">
       <form method="get" action="{% url 'listar_extintores' %}" class="row g-3 align-items-end">
         
         <!-- Filtro por Número -->
-        <div class="col-md-3">
+        <div class="col-12 col-sm-6 col-md-3">
           <label for="id_numero" class="form-label small fw-bold text-secondary">Número do Extintor</label>
           <input 
             type="number" 
             name="numero" 
             id="id_numero" 
-            class="form-control" 
+            class="form-control form-control-sm bg-light" 
             placeholder="Ex: 12" 
             value="{{ numero_filtro }}"
           >
         </div>
 
         <!-- Filtro por Empresa -->
-        <div class="col-md-4">
+        <div class="col-12 col-sm-6 col-md-4">
           <label for="filtroEmpresa" class="form-label small fw-bold text-secondary">Empresa</label>
-          <select name="empresa" id="filtroEmpresa" class="form-select">
+          <select name="empresa" id="filtroEmpresa" class="form-select form-select-sm bg-light">
             <option value="">Selecione primeiro a empresa...</option>
             {% for emp in empresas %}
               <option value="{{ emp.pk }}" {% if emp.pk|stringformat:"s" == empresa_filtro %}selected{% endif %}>{{ emp.nome }}</option>
@@ -58,9 +58,9 @@
         </div>
 
         <!-- Filtro por Setor (Disponível apenas após selecionar a empresa) -->
-        <div class="col-md-3">
+        <div class="col-12 col-sm-6 col-md-3">
           <label for="filtroSetor" class="form-label small fw-bold text-secondary">Setor</label>
-          <select name="setor" id="filtroSetor" class="form-select" {% if not empresa_filtro %}disabled{% endif %}>
+          <select name="setor" id="filtroSetor" class="form-select form-select-sm bg-light" {% if not empresa_filtro %}disabled{% endif %}>
             <option value="">{% if empresa_filtro %}Todos os setores{% else %}Selecione uma empresa primeiro{% endif %}</option>
             {% for s in setores %}
               <option value="{{ s.pk }}" data-empresa="{{ s.empresa_id }}"
@@ -70,13 +70,13 @@
         </div>
 
         <!-- Botões de Ação -->
-        <div class="col-md-2 d-flex gap-2">
-          <button type="submit" class="btn btn-primary w-100">
+        <div class="col-12 col-sm-6 col-md-2 d-flex gap-2">
+          <button type="submit" class="btn btn-primary btn-sm w-75 fw-semibold d-flex align-items-center justify-content-center" style="height: 31px;">
             <i class="fa-solid fa-magnifying-glass me-1"></i> Filtrar
           </button>
           
           {% if setor_filtro or numero_filtro or empresa_filtro %}
-            <a href="{% url 'listar_extintores' %}" class="btn btn-outline-secondary" title="Limpar Filtros">
+            <a href="{% url 'listar_extintores' %}" class="btn btn-outline-secondary btn-sm w-25 d-flex align-items-center justify-content-center" style="height: 31px;" title="Limpar Filtros">
               <i class="fa-solid fa-xmark"></i>
             </a>
           {% endif %}
@@ -87,7 +87,7 @@
   </div>
 
   {# ===== CARD PRINCIPAL DE LISTAGEM ===== #}
-  <div class="card shadow-sm border-0 rounded-3">
+  <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
     
     {# VISÃO MOBILE: CARDS CLEAN #}
     <div class="d-md-none p-3">
@@ -130,7 +130,7 @@
                 {% endif %}
               </div>
 
-              <button type="button" class="btn btn-graphite btn-sm px-3" data-bs-toggle="modal" data-bs-target="#modalEditarExtintor{{ extintor.id }}">
+              <button type="button" class="btn btn-outline-dark btn-sm px-3" data-bs-toggle="modal" data-bs-target="#modalEditarExtintor{{ extintor.id }}">
                 <i class="fa-solid fa-pen-to-square me-1"></i> Editar
               </button>
             </div>
@@ -149,32 +149,30 @@
       <table class="table table-industrial table-hover mb-0 align-middle">
         <thead>
           <tr>
-            <th style="width:80px;">Nº</th>
+            <th class="ps-4" style="width:80px;">Nº</th>
             <th>Setor</th>
-            <th>Carga</th>
-            <th>Tipo</th>
+            <th>Carga/ Tipo</th>
             <th>Vencimento</th>
             <th class="text-center">Situação</th>
             <th class="text-center">Foto</th>
-            <th class="text-end" style="width: 100px;">Ações</th>
+            <th class="text-center pe-4" style="width: 120px;">Ações</th>
           </tr>
         </thead>
         <tbody>
           {% for extintor in extintores %}
             <tr>
-              <td>
+              <td class="ps-4">
                 <span class="mono fw-bold text-dark fs-6">
                   {{ extintor.numero|default:"—" }}
                 </span>
               </td>
 
               <td class="fw-semibold text-dark">{{ extintor.setor.nome }}</td>
-              <td>{{ extintor.get_carga_display }}</td>
-
               <td>
-                <span class="badge-industrial-light">
-                  {{ extintor.tipo }}
-                </span>
+                <div class="badge-combined">
+                  <span class="carga-part">{{ extintor.get_carga_display }}</span>
+                  <span class="tipo-part">{{ extintor.tipo }}</span>
+                </div>
               </td>
 
               <td class="mono small">
@@ -203,13 +201,13 @@
                 {% endif %}
               </td>
 
-              <td class="text-end">
+              <td class="text-end pe-4">
                 <button type="button" 
-                        class="btn btn-outline-secondary btn-sm px-2 py-1" 
+                        class="btn btn-sm btn-light border text-secondary px-3 py-1 fw-semibold action-edit-btn" 
                         data-bs-toggle="modal" 
                         data-bs-target="#modalEditarExtintor{{ extintor.id }}"
                         title="Editar Extintor">
-                  <i class="fa-solid fa-pen-to-square me-1"></i> Editar
+                  <i class="fa-solid fa-pen-to-square text-success me-1"></i> Editar
                 </button>
               </td>
             </tr>
@@ -274,10 +272,10 @@
 {% for extintor in extintores %}
   <div class="modal fade" id="modalEditarExtintor{{ extintor.id }}" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
-      <div class="modal-content">
+      <div class="modal-content border-0 shadow">
         
-        <div class="modal-header">
-          <h5 class="modal-title">Editar Extintor Nº {{ extintor.numero }}</h5>
+        <div class="modal-header bg-light">
+          <h5 class="modal-title fw-bold text-dark">Editar Extintor Nº {{ extintor.numero }}</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
 
@@ -286,14 +284,14 @@
           {% csrf_token %}
           <input type="hidden" name="extintor_id" value="{{ extintor.id }}">
 
-          <div class="modal-body text-start">
-            <div class="row">
-              <div class="col-md-4 mb-3">
+          <div class="modal-body text-start p-4">
+            <div class="row g-3">
+              <div class="col-md-4">
                 <label class="form-label small text-uppercase mono text-secondary fw-semibold">Número</label>
                 <input type="text" name="numero" value="{{ extintor.numero|default:'' }}" class="form-control">
               </div>
 
-              <div class="col-md-8 mb-3">
+              <div class="col-md-8">
                 <label class="form-label small text-uppercase mono text-secondary fw-semibold">Setor</label>
                 <select name="setor" class="form-select">
                   {% for setor in form.fields.setor.queryset %}
@@ -304,7 +302,7 @@
                 </select>
               </div>
 
-              <div class="col-md-6 mb-3">
+              <div class="col-md-6">
                 <label class="form-label small text-uppercase mono text-secondary fw-semibold">Carga</label>
                 <select name="carga" class="form-select">
                   {% for value, label in extintor.CARGA_CHOICES %}
@@ -315,7 +313,7 @@
                 </select>
               </div>
 
-              <div class="col-md-6 mb-3">
+              <div class="col-md-6">
                 <label class="form-label small text-uppercase mono text-secondary fw-semibold">Tipo</label>
                 <select name="tipo" class="form-select">
                   {% for value, label in extintor.TIPOS_INCENDIO %}
@@ -326,17 +324,17 @@
                 </select>
               </div>
 
-              <div class="col-md-6 mb-3">
+              <div class="col-md-6">
                 <label class="form-label small text-uppercase mono text-secondary fw-semibold">Data da Vistoria</label>
                 <input type="date" name="data_vistoria" value="{{ extintor.data_vistoria|date:'Y-m-d' }}" class="form-control">
               </div>
 
-              <div class="col-md-6 mb-3">
+              <div class="col-md-6">
                 <label class="form-label small text-uppercase mono text-secondary fw-semibold">Data de Vencimento</label>
                 <input type="date" name="data_vencimento" value="{{ extintor.data_vencimento|date:'Y-m-d' }}" class="form-control">
               </div>
 
-              <div class="col-md-6 mb-3">
+              <div class="col-md-6">
                 <label class="form-label small text-uppercase mono text-secondary fw-semibold">Situação</label>
                 <select name="situacao" class="form-select">
                   {% for value, label in extintor.STATUS_CHOICES %}
@@ -347,7 +345,7 @@
                 </select>
               </div>
 
-              <div class="col-md-6 mb-3">
+              <div class="col-md-6">
                 <label class="form-label small text-uppercase mono text-secondary fw-semibold">Foto</label>
                 <input type="file" name="imagem" class="form-control" accept="image/*">
                 {% if extintor.imagem %}
@@ -361,7 +359,7 @@
         </form> {# Fim do formulário de edição #}
 
         {# FOOTER COM OS DOIS FORMULÁRIOS SEPARADOS #}
-        <div class="modal-footer d-flex justify-content-between py-2 bg-light border-top">
+        <div class="modal-footer d-flex justify-content-between py-3 bg-light border-top">
           {# Formulário 1: Exclusão (Independente) #}
           <form method="post" action="{% url 'deletar_extintor' extintor.id %}" onsubmit="return confirm('Tem certeza que deseja excluir o Extintor Nº {{ extintor.numero }}?');">
             {% csrf_token %}
@@ -372,9 +370,8 @@
 
           {# Ações da Edição #}
           <div>
-            <button type="button" class="btn btn-sm btn-outline-secondary me-1" data-bs-dismiss="modal">Cancelar</button>
-            {# O atributo form="..." aciona o envio do formEditarExtintor por fora #}
-            <button type="submit" form="formEditarExtintor{{ extintor.id }}" class="btn btn-sm btn-signal">
+            <button type="button" class="btn btn-sm btn-outline-secondary me-1 px-3" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" form="formEditarExtintor{{ extintor.id }}" class="btn btn-sm btn-primary px-4 fw-semibold">
               Salvar Alterações
             </button>
           </div>
@@ -427,13 +424,11 @@
 
     if (!emp || !set) return;
 
-    // Salva uma cópia de todas as opções de setores originais em memória
     const todasOpcoesSetor = Array.from(set.options);
 
     function atualizarSetores() {
       const empresaSelecionada = emp.value;
 
-      // Limpa o select de setores
       set.innerHTML = '';
 
       if (!empresaSelecionada) {
@@ -446,7 +441,6 @@
       } else {
         set.disabled = false;
         
-        // Adiciona a opção padrão "Todos os setores"
         const optTodos = document.createElement('option');
         optTodos.value = "";
         optTodos.text = "Todos os setores";
@@ -455,7 +449,6 @@
         let temOpcoes = false;
         const setorAtual = "{{ setor_filtro }}";
 
-        // Filtra e reinsere apenas os setores correspondentes à empresa selecionada
         todasOpcoesSetor.forEach(o => {
           if (!o.value) return;
           const empresaIdDoSetor = o.getAttribute("data-empresa");
@@ -481,7 +474,6 @@
       atualizarSetores();
     });
 
-    // Executa no carregamento caso venha com empresa pré-selecionada via GET
     if (emp.value) {
       atualizarSetores();
     }
@@ -502,32 +494,32 @@
   }
 
   .table-industrial {
-    border-color: var(--steel-100);
+    border-color: var(--steel-100, #e2e8f0);
   }
   .table-industrial thead th {
-    font-family: var(--font-display);
-    font-size: 0.78rem;
+    font-family: var(--font-display, inherit);
+    font-size: 0.75rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    background: var(--graphite-950);
-    color: var(--steel-300);
-    border-bottom: 2px solid var(--amber-500);
-    padding: 0.85rem 1rem;
+    background: #f8fafc;
+    color: #475569;
+    border-bottom: 2px solid #e2e8f0;
+    padding: 1rem;
   }
   .table-industrial tbody td {
-    padding: 0.85rem 1rem;
-    border-bottom: 1px solid var(--steel-100);
+    padding: 1rem;
+    border-bottom: 1px solid #f1f5f9;
   }
 
   .badge-industrial-light {
-    background: var(--steel-100);
-    color: var(--graphite-700);
-    border: 1px solid var(--steel-300);
-    font-family: var(--font-mono);
+    background: #f1f5f9;
+    color: #334155;
+    border: 1px solid #e2e8f0;
+    font-family: var(--font-mono, monospace);
     font-weight: 600;
     font-size: 0.72rem;
-    padding: 0.2em 0.5em;
-    border-radius: 3px;
+    padding: 0.25em 0.6em;
+    border-radius: 4px;
   }
 
   /* Botão Principal */
@@ -550,6 +542,29 @@
   .btn-sst-primary:hover {
       background-color: #047857;
       color: #ffffff;
+  }
+
+  /* Bloco combinado de Carga e Tipo */
+  .badge-combined {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid var(--card-border, #e2e8f0);
+    border-radius: 50rem;
+    background-color: #f8fafc;
+    overflow: hidden;
+    font-size: 0.78rem;
+  }
+  .badge-combined .carga-part {
+    background-color: #ffffff;
+    font-weight: 700;
+    color: #0f172a;
+    padding: 0.25rem 0.65rem;
+    border-right: 1px solid #e2e8f0;
+  }
+  .badge-combined .tipo-part {
+    padding: 0.25rem 0.65rem;
+    color: #475569;
+    font-weight: 600;
   }
 </style>
 {% endblock %}
