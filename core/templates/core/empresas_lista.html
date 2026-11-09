@@ -1,132 +1,319 @@
 {% extends "core/base.html" %}
 
+{% block title %}Empresas — Gestão de Segurança{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Badges personalizadas */
+    .badge-status {
+        font-weight: 600;
+        font-size: 0.75rem;
+        padding: 0.35rem 0.65rem;
+        border-radius: 6px;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+    .badge-ok { background-color: #d1fae5; color: #065f46; }
+    .badge-vencido { background-color: #fee2e2; color: #991b1b; }
+    .badge-neutro { background-color: #f1f5f9; color: #475569; }
+
+    /* Cabeçalho da Tabela */
+    .table-custom-header {
+        background-color: #f8fafc;
+        color: var(--text-muted, #64748b);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 700;
+        border-bottom: 2px solid var(--card-border, #e2e8f0);
+    }
+
+    /* Cards no Mobile */
+    .empresa-card {
+        border: 1px solid var(--card-border, #e2e8f0);
+        border-radius: 12px;
+        background: #fff;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .empresa-card:active {
+        background-color: #f8fafc;
+    }
+
+    /* Botão SST Primário */
+    .btn-sst-primary {
+        background-color: #059669;
+        color: #ffffff;
+        border: none;
+        border-radius: 8px;
+        padding: 0.5rem 1.25rem;
+        font-weight: 600;
+        font-size: 0.875rem;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        text-decoration: none;
+    }
+    .btn-sst-primary:hover {
+        background-color: #047857;
+        color: #ffffff;
+    }
+
+    /* Estilização automática para o form.as_p do Django dentro do modal */
+    .empresa-form-body p {
+        margin-bottom: 1rem;
+    }
+    .empresa-form-body label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: #475569;
+        margin-bottom: 0.35rem;
+        display: block;
+    }
+    .empresa-form-body input,
+    .empresa-form-body select,
+    .empresa-form-body textarea {
+        display: block;
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+        font-weight: 400;
+        line-height: 1.5;
+        color: #212529;
+        background-color: #fff;
+        background-clip: padding-box;
+        border: 1px solid #ced4da;
+        border-radius: 8px;
+        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    }
+    .empresa-form-body input:focus,
+    .empresa-form-body select:focus,
+    .empresa-form-body textarea:focus {
+        border-color: #059669;
+        outline: 0;
+        box-shadow: 0 0 0 0.2rem rgba(5, 150, 105, 0.15);
+    }
+    .empresa-form-body input[type="checkbox"] {
+        width: 1.25rem;
+        height: 1.25rem;
+        margin-top: 0.25rem;
+        vertical-align: top;
+        background-color: #fff;
+        border: 1px solid rgba(0, 0, 0, 0.25);
+        appearance: none;
+        -webkit-appearance: none;
+        border-radius: 0.25rem;
+        transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+        cursor: pointer;
+    }
+    .empresa-form-body input[type="checkbox"]:checked {
+        background-color: #059669;
+        border-color: #059669;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='m6 10 3 3 6-6'/%3e%3c/svg%3e");
+        background-position: center;
+        background-repeat: no-repeat;
+        background-size: size 1rem;
+    }
+    .empresa-form-body .helptext,
+    .empresa-form-body .errorlist {
+        font-size: 0.75rem;
+        color: #dc2626;
+        margin-top: 0.25rem;
+        list-style: none;
+        padding-left: 0;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container-fluid py-3">
+<div class="container-fluid p-0 pb-4">
 
-  {# Cabeçalho da Página e Botão de Ação #}
-  <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4 pb-3 border-bottom border-secondary border-opacity-25">
-    <div>
-      <div class="text-muted small text-uppercase mono">Gestão de Extintores</div>
-      <h3 class="text-dark display-font fw-bold mb-0">
-        <i class="fa-solid fa-building me-2 text-warning"></i>Empresas Cadastradas
-      </h3>
-    </div>
-    <div>
-      <button class="btn btn-signal btn-lg" data-bs-toggle="modal" data-bs-target="#modalEmpresa">
-        <i class="fa-solid fa-plus me-1"></i> Nova Empresa
-      </button>
-    </div>
-  </div>
-
-  {# Barra de Busca e Filtros em Card #}
-  <div class="card border-0 shadow-sm mb-4">
-    <div class="card-body bg-light rounded p-3">
-      <form method="get" class="row g-2 align-items-center">
-        <div class="col-12 col-md-10">
-          <div class="input-group">
-            <span class="input-group-text bg-white border-end-0 text-muted">
-              <i class="fa-solid fa-magnifying-glass"></i>
-            </span>
-            <input type="text" name="busca" value="{{ busca }}" class="form-control border-start-0 ps-0 shadow-none" placeholder="Buscar empresa por nome, CNPJ...">
-          </div>
+    {# Cabeçalho da Página e Botão de Ação #}
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4 pb-3 border-bottom">
+        <div>
+            <h3 class="fw-bold m-0 fs-4 fs-md-3" style="color: var(--text-main);">
+                <i class="fa-solid fa-building text-success me-2"></i>Empresas Cadastradas
+            </h3>
+            <p class="text-muted small m-0 mt-1">Gerencie a estrutura organizacional e acompanhe extintores por empresa</p>
         </div>
-        <div class="col-12 col-md-2 d-flex gap-2">
-          <button type="submit" class="btn btn-primary w-100">Buscar</button>
-          {% if busca %}
-            <a href="{% url 'listar_empresas' %}" class="btn btn-outline-secondary" title="Limpar busca">
-              <i class="fa-solid fa-xmark"></i>
-            </a>
-          {% endif %}
+        <div>
+            <button class="btn-sst-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#modalEmpresa">
+                <i class="fa-solid fa-plus"></i> Nova Empresa
+            </button>
         </div>
-      </form>
     </div>
-  </div>
 
-  {# Card Principal da Tabela / Listagem #}
-  <div class="card border-0 shadow-sm">
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-          <thead class="table-light">
-            <tr>
-              <th class="ps-4">Empresa</th>
-              <th class="text-center">Setores</th>
-              <th class="text-center">Extintores</th>
-              <th class="text-center">Vencidos</th>
-              <th class="text-end pe-4">Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for e in empresas %}
-              <tr>
-                <td class="ps-4">
-                  <div class="fw-bold text-dark">{{ e.nome }}</div>
-                  {% if not e.ativo %}
-                    <span class="badge bg-secondary small mt-1">Inativa</span>
-                  {% endif %}
-                </td>
-                <td class="text-center">
-                  <span class="badge bg-light text-dark border px-2 py-1">{{ e.total_setores }}</span>
-                </td>
-                <td class="text-center">
-                  <span class="badge bg-light text-dark border px-2 py-1">{{ e.total_extintores }}</span>
-                </td>
-                <td class="text-center">
-                  {% if e.total_vencidos and e.total_vencidos > 0 %}
-                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1 fw-bold">
-                      {{ e.total_vencidos }}
-                    </span>
-                  {% else %}
-                    <span class="text-muted small">0</span>
-                  {% endif %}
-                </td>
-                <td class="text-end pe-4">
-                  <a href="{% url 'detalhe_empresa' e.pk %}" class="btn btn-sm btn-outline-secondary px-3">
-                    <i class="fa-solid fa-folder-open me-1"></i> Abrir
-                  </a>
-                </td>
-              </tr>
-            {% empty %}
-              <tr>
-                <td colspan="5" class="text-center py-5">
-                  <div class="text-muted">
-                    <i class="fa-solid fa-building-circle-exclamation fs-1 mb-2 text-secondary opacity-50 d-block"></i>
+    {# Barra de Busca em Card #}
+    <div class="card border-0 shadow-sm mb-4 rounded-3">
+        <div class="card-body p-3 bg-white">
+            <form method="get" class="row g-2 align-items-center">
+                <div class="col-12 col-md-10">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0 text-muted">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </span>
+                        <input type="text" name="busca" value="{{ busca }}" class="form-control bg-light border-start-0 ps-0 shadow-none" placeholder="Buscar empresa por nome...">
+                    </div>
+                </div>
+                <div class="col-12 col-md-2 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary fw-semibold w-100">
+                        <i class="fa-solid fa-search me-1"></i> Buscar
+                    </button>
                     {% if busca %}
-                      Nenhuma empresa corresponde à pesquisa "<strong>{{ busca }}</strong>".
-                    {% else %}
-                      Nenhuma empresa cadastrada no sistema.
+                        <a href="{% url 'listar_empresas' %}" class="btn btn-outline-secondary" title="Limpar busca">
+                            <i class="fa-solid fa-xmark"></i>
+                        </a>
                     {% endif %}
-                  </div>
-                </td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
+                </div>
+            </form>
+        </div>
     </div>
-  </div>
 
-  {# Modal de Cadastro de Nova Empresa #}
-  <div class="modal fade" id="modalEmpresa" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content border-0 shadow">
-        <form method="post">
-          {% csrf_token %}
-          <div class="modal-header bg-light">
-            <h5 class="modal-title display-font fw-bold text-dark">Cadastrar Nova Empresa</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-          </div>
-          <div class="modal-body p-4">
-            {{ form.as_p }}
-          </div>
-          <div class="modal-footer bg-light">
-            <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
-            <button type="submit" class="btn btn-primary btn-sm px-4">Salvar Empresa</button>
-          </div>
-        </form>
-      </div>
+    {# VISÃO MOBILE: CARDS CLEAN (Telas < md) #}
+    <div class="d-block d-md-none">
+        {% for e in empresas %}
+            <div class="empresa-card p-3 mb-3 shadow-sm">
+                <div class="d-flex justify-content-between align-items-start mb-2 pb-2 border-bottom">
+                    <div>
+                        <span class="fw-bold text-dark fs-6">{{ e.nome }}</span>
+                        {% if not e.ativo %}
+                            <span class="badge bg-secondary small ms-1">Inativa</span>
+                        {% endif %}
+                    </div>
+                    {% if e.total_vencidos and e.total_vencidos > 0 %}
+                        <span class="badge badge-status badge-vencido">
+                            <i class="fas fa-triangle-exclamation"></i> {{ e.total_vencidos }} Vencido{{ e.total_vencidos|pluralize:"s" }}
+                        </span>
+                    {% else %}
+                        <span class="badge badge-status badge-ok">
+                            <i class="fas fa-circle-check"></i> Em Dia
+                        </span>
+                    {% endif %}
+                </div>
+
+                <div class="row g-2 text-muted small mb-3">
+                    <div class="col-6">
+                        <i class="fa-solid fa-warehouse me-1 text-secondary"></i> <strong>Setores:</strong> {{ e.total_setores|default:0 }}
+                    </div>
+                    <div class="col-6">
+                        <i class="fa-solid fa-fire-extinguisher me-1 text-secondary"></i> <strong>Extintores:</strong> {{ e.total_extintores|default:0 }}
+                    </div>
+                </div>
+
+                <div class="pt-2 border-top">
+                    <a href="{% url 'detalhe_empresa' e.pk %}" class="btn btn-sm btn-light border text-dark w-100 fw-semibold d-flex align-items-center justify-content-center gap-1">
+                        <i class="fa-solid fa-folder-open text-warning me-1"></i> Abrir Detalhes
+                    </a>
+                </div>
+            </div>
+        {% empty %}
+            <div class="card p-4 text-center text-muted border-0 shadow-sm">
+                <i class="fa-solid fa-building-circle-exclamation fa-2x mb-2 text-secondary opacity-50"></i>
+                {% if busca %}
+                    <p class="m-0 fw-medium">Nenhuma empresa corresponde à pesquisa "<strong>{{ busca }}</strong>".</p>
+                {% else %}
+                    <p class="m-0 fw-medium">Nenhuma empresa cadastrada no sistema.</p>
+                {% endif %}
+            </div>
+        {% endfor %}
     </div>
-  </div>
+
+    {# VISÃO DESKTOP: TABELA INDUSTRIAL (Telas >= md) #}
+    <div class="card border-0 shadow-sm overflow-hidden rounded-3 d-none d-md-block">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr class="table-custom-header">
+                        <th class="ps-4">Empresa</th>
+                        <th class="text-center">Setores</th>
+                        <th class="text-center">Extintores</th>
+                        <th class="text-center">Vencidos</th>
+                        <th class="text-end pe-4">Ações</th>
+                    </tr>
+                </thead>
+                <tbody class="border-top-0">
+                    {% for e in empresas %}
+                        <tr>
+                            <td class="ps-4">
+                                <div class="fw-bold text-dark fs-6">{{ e.nome }}</div>
+                                {% if not e.ativo %}
+                                    <span class="badge bg-secondary small">Inativa</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <span class="badge badge-status badge-neutro">{{ e.total_setores|default:0 }}</span>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge badge-status badge-neutro">{{ e.total_extintores|default:0 }}</span>
+                            </td>
+                            <td class="text-center">
+                                {% if e.total_vencidos and e.total_vencidos > 0 %}
+                                    <span class="badge badge-status badge-vencido">
+                                        <i class="fas fa-triangle-exclamation"></i> {{ e.total_vencidos }}
+                                    </span>
+                                {% else %}
+                                    <span class="badge badge-status badge-ok">
+                                        <i class="fas fa-check"></i> 0
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end pe-4">
+                                <a href="{% url 'detalhe_empresa' e.pk %}" class="btn btn-sm btn-outline-secondary px-3 fw-semibold">
+                                    <i class="fa-solid fa-folder-open me-1 text-warning"></i> Abrir
+                                </a>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center py-5 text-muted">
+                                <i class="fa-solid fa-building-circle-exclamation fa-2x mb-3 text-secondary opacity-50 d-block"></i>
+                                {% if busca %}
+                                    Nenhuma empresa corresponde à pesquisa "<strong>{{ busca }}</strong>".
+                                {% else %}
+                                    Nenhuma empresa cadastrada no sistema.
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {# Modal de Cadastro de Nova Empresa #}
+    <div class="modal fade" id="modalEmpresa" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 14px; overflow: hidden;">
+                <div class="modal-header border-0 text-white" style="background: linear-gradient(180deg, var(--sidebar-bg-start, #064e3b) 0%, var(--sidebar-bg-end, #022c22) 100%);">
+                    <h5 class="modal-title fw-bold fs-6">
+                        <i class="fa-solid fa-building me-2 text-success"></i>Cadastrar Nova Empresa
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="modal-body p-4 empresa-form-body">
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger py-2 small">
+                                {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+
+                        {{ form.as_p }}
+                    </div>
+                    <div class="modal-footer bg-light border-0 px-4 py-3">
+                        <button type="button" class="btn btn-sm btn-link text-muted text-decoration-none fw-semibold" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary btn-sm px-4 fw-semibold">
+                            <i class="fas fa-check me-1"></i> Salvar Empresa
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
 </div>
 {% endblock %}
