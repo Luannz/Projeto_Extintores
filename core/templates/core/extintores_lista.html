@@ -150,6 +150,7 @@
         <thead>
           <tr>
             <th class="ps-4" style="width:80px;">Nº</th>
+            <th>Empresa</th>
             <th>Setor</th>
             <th>Carga/ Tipo</th>
             <th>Vencimento</th>
@@ -166,7 +167,7 @@
                   {{ extintor.numero|default:"—" }}
                 </span>
               </td>
-
+              <td class="fw-semibold text-dark">{{ extintor.setor.empresa.nome }}</td>
               <td class="fw-semibold text-dark">{{ extintor.setor.nome }}</td>
               <td>
                 <div class="badge-combined">
