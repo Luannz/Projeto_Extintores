@@ -77,6 +77,28 @@
     .action-badge-btn:active {
         opacity: 0.7;
     }
+    /* Bloco combinado de Carga e Tipo */
+    .badge-combined {
+        display: inline-flex;
+        align-items: center;
+        border: 1px solid var(--card-border, #e2e8f0);
+        border-radius: 50rem;
+        background-color: #f8fafc;
+        overflow: hidden;
+        font-size: 0.78rem;
+    }
+    .badge-combined .carga-part {
+        background-color: #ffffff;
+        font-weight: 700;
+        color: #0f172a;
+        padding: 0.25rem 0.65rem;
+        border-right: 1px solid #e2e8f0;
+    }
+    .badge-combined .tipo-part {
+        padding: 0.25rem 0.65rem;
+        color: #475569;
+        font-weight: 600;
+    }
 </style>
 {% endblock %}
 
@@ -268,8 +290,7 @@
                     <tr class="table-custom-header">
                         <th class="ps-4">Nº</th>
                         <th>Setor / Localização</th>
-                        <th>Carga</th>
-                        <th>Tipo</th>
+                        <th>Carga / Tipo</th>
                         <th>Vencimento</th>
                         <th>Última Vistoria <i class="fas fa-info-circle text-muted ms-1" title="Clique para atualizar"></i></th>
                         <th class="pe-4">Situação <i class="fas fa-info-circle text-muted ms-1" title="Clique para atualizar"></i></th>
@@ -293,9 +314,13 @@
                         <td>
                             <div class="fw-semibold text-dark">{{ e.setor.nome }}</div>
                         </td>
-                        <td>{{ e.get_carga_display }}</td>
-                        <td>{{ e.get_tipo_display }}</td>
-                        
+                        <td>
+                            <div class="badge-combined">
+                                <span class="carga-part">{{ e.get_carga_display }}</span>
+                                <span class="tipo-part">{{ e.get_tipo_display }}</span>
+                            </div>
+                        </td>
+
                         <td onclick="abrirModalEdicao('{{ e.id }}', '{{ e.numero }}', '{{ e.data_vistoria|date:'Y-m-d' }}', '{{ e.situacao }}', '{{ e.data_vencimento|date:'Y-m-d' }}')">
                             <div class="editable-cell d-inline-flex align-items-center gap-2">
                                 {% if e.data_vencimento < hoje %}
@@ -474,13 +499,15 @@ document.addEventListener("DOMContentLoaded", function () {
     const emp = document.getElementById("filtroEmpresa");
     const set = document.getElementById("filtroSetor");
 
-    // Salva cópia de todas as opções originais de setores na primeira carga
-    const todasOpcoesSetor = Array.from(set.options);
+    if (!emp || !set) return;
+
+    // Coleta todas as opções de setores impressas pelo Django no HTML inicial
+    const todasOpcoesSetor = Array.from(set.options).filter(o => o.value !== "");
 
     function atualizarSetores() {
         const empresaSelecionada = emp.value;
 
-        // Limpa o select de setores mantendo apenas a primeira opção padrão
+        // Limpa o select de setores mantendo apenas a estrutura padrão
         set.innerHTML = '';
 
         if (!empresaSelecionada) {
@@ -500,11 +527,10 @@ document.addEventListener("DOMContentLoaded", function () {
             set.appendChild(optTodos);
 
             let temOpcoes = false;
-            const setorAtual = "{{ setor_filtro }}";
+            const setorAtual = "{{ setor_atual }}";
 
-            // Filtra e reinseri apenas os setores pertencentes à empresa selecionada
+            // Filtra e reinsere apenas os setores pertencentes à empresa selecionada
             todasOpcoesSetor.forEach(o => {
-                if (!o.value) return;
                 const empresaIdDoSetor = o.getAttribute("data-empresa");
                 
                 if (empresaIdDoSetor === empresaSelecionada) {
@@ -518,7 +544,10 @@ document.addEventListener("DOMContentLoaded", function () {
             });
 
             if (!temOpcoes) {
-                set.innerHTML = '<option value="">Nenhum setor cadastrado para esta empresa</option>';
+                const optVazio = document.createElement('option');
+                optVazio.value = "";
+                optVazio.text = "Nenhum setor cadastrado para esta empresa";
+                set.appendChild(optVazio);
             }
         }
     }
@@ -556,7 +585,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const btnMaisUmAno = document.getElementById('btnMaisUmAno');
     
     if (btnMaisUmAno) {
-        btnMaisUmAno.addEventListener('click', function() {
+        btnMaisUmano.addEventListener('click', function() {
             const inputVenc = document.getElementById('modal_data_vencimento');
             
             let baseDate = inputVenc && inputVenc.value 

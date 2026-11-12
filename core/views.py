@@ -463,18 +463,16 @@ def inspecao_extintores(request):
     page_number = request.GET.get("page")
     extintores_paginados = paginator.get_page(page_number)
 
-    # Carrega os setores dinamicamente: se a empresa estiver selecionada, traz apenas os dela; senão, traz todos
-    setores_queryset = Setor.objects.filter(ativo=True)
-    if empresa_filtro:
-        setores_queryset = setores_queryset.filter(empresa_id=empresa_filtro)
+    # IMPORTANTE: Carrega TODOS os setores ativos globalmente para o script gerenciar dinamicamente
+    setores_queryset = Setor.objects.filter(ativo=True).order_by('nome')
 
     return render(
         request,
-        "core/extintores_manutencao.html",
+        "core/extintores_inspecao.html",
         {
             "extintores": extintores_paginados,
             "setores": setores_queryset,
-            "empresas": Empresa.objects.filter(ativo=True),
+            "empresas": Empresa.objects.filter(ativo=True).order_by('nome'),
             # Filtros mantidos no contexto para preencher os selects no HTML
             "setor_atual": setor_filtro,
             "empresa_filtro": empresa_filtro, 
