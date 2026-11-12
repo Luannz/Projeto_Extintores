@@ -137,9 +137,19 @@
           </div>
         </div>
       {% empty %}
-        <div class="text-center py-5 text-muted">
-          <i class="fa-solid fa-fire-extinguisher fs-1 mb-2 text-secondary opacity-50"></i>
-          <p class="mb-0 text-uppercase fw-bold">Nenhum extintor cadastrado</p>
+        <div class="d-md-none p-3">
+          {% for extintor in extintores %}
+            <!-- seus cards de extintor -->
+          {% empty %}
+            <div class="card p-4 text-center text-muted border-0 shadow-sm">
+                <i class="fa-solid fa-building fa-2x mb-2 text-secondary opacity-50"></i>
+                {% if not empresa_filtro and not numero_filtro %}
+                    <p class="m-0 fw-medium">Selecione uma empresa acima para visualizar os extintores.</p>
+                {% else %}
+                    <p class="m-0 fw-medium">Nenhum extintor encontrado para os filtros selecionados.</p>
+                {% endif %}
+            </div>
+          {% endfor %}
         </div>
       {% endfor %}
     </div>
@@ -217,8 +227,13 @@
               <td colspan="8" class="text-center py-5">
                 <div class="text-muted">
                   <i class="fa-solid fa-fire-extinguisher fs-1 mb-3 text-secondary opacity-50 d-block"></i>
-                  <p class="mb-1 display-font fs-5 text-uppercase">Nenhum extintor cadastrado</p>
-                  <small class="text-secondary">Clique no botão superior para cadastrar um novo extintor.</small>
+                  {% if not empresa_filtro and not numero_filtro %}
+                    <p class="mb-1 display-font fs-5 text-uppercase">Selecione uma empresa</p>
+                    <small class="text-secondary">Escolha uma empresa no filtro acima para carregar os extintores.</small>
+                  {% else %}
+                    <p class="mb-1 display-font fs-5 text-uppercase">Nenhum extintor encontrado</p>
+                    <small class="text-secondary">Não há resultados para os filtros informados.</small>
+                  {% endif %}
                 </div>
               </td>
             </tr>
@@ -401,35 +416,41 @@
 
 {% block extra_js %}
 <script>
+  // 1. Lógica do Modal de Visualização de Imagem
   document.addEventListener('DOMContentLoaded', function() {
     const modalImagemElement = document.getElementById('modalVerImagem');
-    const modalImagem = new bootstrap.Modal(modalImagemElement);
-    const imgModalPreview = document.getElementById('imgModalPreview');
-    const tituloModal = document.getElementById('tituloModalImagem');
+    if (modalImagemElement) {
+      const modalImagem = new bootstrap.Modal(modalImagemElement);
+      const imgModalPreview = document.getElementById('imgModalPreview');
+      const tituloModal = document.getElementById('tituloModalImagem');
 
-    document.querySelectorAll('.btn-preview-img').forEach(btn => {
-      btn.addEventListener('click', function() {
-        const url = this.getAttribute('data-img-url');
-        const num = this.getAttribute('data-extintor-num') || '';
-        
-        imgModalPreview.setAttribute('src', url);
-        tituloModal.textContent = num ? `Foto do Extintor Nº ${num}` : 'Foto do Extintor';
-        modalImagem.show();
+      document.querySelectorAll('.btn-preview-img').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const url = this.getAttribute('data-img-url');
+          const num = this.getAttribute('data-extintor-num') || '';
+          
+          imgModalPreview.setAttribute('src', url);
+          tituloModal.textContent = num ? `Foto do Extintor Nº ${num}` : 'Foto do Extintor';
+          modalImagem.show();
+        });
       });
-    });
+    }
   });
 
+  // 2. Lógica Dinâmica de Dependência entre Empresa e Setor
   document.addEventListener("DOMContentLoaded", function () {
     const emp = document.getElementById("filtroEmpresa");
     const set = document.getElementById("filtroSetor");
 
     if (!emp || !set) return;
 
+    // Salva cópia de todas as opções originais de setores na primeira carga
     const todasOpcoesSetor = Array.from(set.options);
 
     function atualizarSetores() {
       const empresaSelecionada = emp.value;
 
+      // Limpa o select de setores mantendo apenas a limpeza inicial
       set.innerHTML = '';
 
       if (!empresaSelecionada) {
@@ -442,6 +463,7 @@
       } else {
         set.disabled = false;
         
+        // Adiciona a opção "Todos os setores"
         const optTodos = document.createElement('option');
         optTodos.value = "";
         optTodos.text = "Todos os setores";
@@ -450,6 +472,7 @@
         let temOpcoes = false;
         const setorAtual = "{{ setor_filtro }}";
 
+        // Filtra e reinsere apenas os setores pertencentes à empresa selecionada
         todasOpcoesSetor.forEach(o => {
           if (!o.value) return;
           const empresaIdDoSetor = o.getAttribute("data-empresa");
@@ -465,18 +488,24 @@
         });
 
         if (!temOpcoes) {
-          set.innerHTML = '<option value="">Nenhum setor cadastrado para esta empresa</option>';
+          const optVazio = document.createElement('option');
+          optVazio.value = "";
+          optVazio.text = "Nenhum setor cadastrado para esta empresa";
+          set.appendChild(optVazio);
         }
       }
     }
 
-    emp.addEventListener("change", function() {
-      set.value = "";
-      atualizarSetores();
-    });
+    if (emp) {
+      emp.addEventListener("change", function() {
+        set.value = "";
+        atualizarSetores();
+      });
 
-    if (emp.value) {
-      atualizarSetores();
+      // Executa ao carregar caso venha com valor pré-selecionado na sessão/GET
+      if (emp.value) {
+        atualizarSetores();
+      }
     }
   });
 </script>

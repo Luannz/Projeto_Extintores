@@ -289,6 +289,7 @@ def deletar_setor(request, pk):
 
 # ============ EXTINTORES ===============
 
+@login_required
 def listar_extintores(request):
     """
     View responsável por listar os extintores cadastrados (com paginação)
@@ -312,31 +313,37 @@ def listar_extintores(request):
             else:
                 messages.error(request, 'Erro ao atualizar o extintor. Verifique os campos.')
 
-    # QuerySet base
-    extintores_list = Extintor.objects.select_related('setor').all().order_by('numero', 'setor__nome')
-
-    # Filtro por Setor
-    setor_filtro = request.GET.get("setor", "").strip()
-    if setor_filtro:
-        extintores_list = extintores_list.filter(setor_id=setor_filtro)
-
-    # Filtro por Empresa
+    # Captura os filtros da URL
     empresa_filtro = request.GET.get("empresa", "").strip()
-    if empresa_filtro:
-        extintores_list = extintores_list.filter(setor__empresa_id=empresa_filtro)
-
-    # Filtro por Número
+    setor_filtro = request.GET.get("setor", "").strip()
     numero_filtro = request.GET.get("numero", "").strip()
-    if numero_filtro and numero_filtro.isdigit():
-        extintores_list = extintores_list.filter(numero=int(numero_filtro))
+
+    # REGRA: Se nenhuma empresa ou número foi informado, inicia com queryset vazio (.none())
+    if not empresa_filtro and not numero_filtro:
+        extintores_list = Extintor.objects.none()
+    else:
+        # QuerySet base otimizado
+        extintores_list = Extintor.objects.select_related('setor__empresa').all().order_by('numero', 'setor__nome')
+
+        # Filtro por Empresa
+        if empresa_filtro:
+            extintores_list = extintores_list.filter(setor__empresa_id=empresa_filtro)
+
+        # Filtro por Setor
+        if setor_filtro:
+            extintores_list = extintores_list.filter(setor_id=setor_filtro)
+
+        # Filtro por Número
+        if numero_filtro and numero_filtro.isdigit():
+            extintores_list = extintores_list.filter(numero=int(numero_filtro))
 
     # Paginação (10 por página)
     paginator = Paginator(extintores_list, 10)
     page_number = request.GET.get('page')
     extintores = paginator.get_page(page_number)
 
-    # Busca a lista de setores cadastrados para popular o select de busca
-    setores = Setor.objects.all().order_by('nome')
+    # Carrega setores e empresas para os selects de filtro
+    setores = Setor.objects.filter(ativo=True).order_by('nome')
     empresas = Empresa.objects.filter(ativo=True).order_by('nome')
 
     # Passamos o form genérico para alimentar os selects nos modais de edição
@@ -345,7 +352,7 @@ def listar_extintores(request):
     return render(request, 'core/extintores_lista.html', {
         'extintores': extintores,
         'setores': setores,
-        "empresas": empresas,
+        'empresas': empresas,
         'setor_filtro': setor_filtro,
         'numero_filtro': numero_filtro,
         'empresa_filtro': empresa_filtro,
