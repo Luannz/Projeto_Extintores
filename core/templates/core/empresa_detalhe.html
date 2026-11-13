@@ -32,20 +32,22 @@
 
   {# Botão Voltar e Cabeçalho da Empresa #}
   <div class="mb-4">
-    <a href="{% url 'listar_empresas' %}" class="text-decoration-none text-muted small fw-semibold">
-      <i class="fa-solid fa-arrow-left me-1"></i> Voltar para Empresas
-    </a>
+    <div class="mb-3">
+        <a href="{% url 'listar_empresas' %}" class="btn btn-sm btn-outline-secondary px-3 py-1 d-inline-flex align-items-center gap-2" style="border-radius: 8px; font-size: 0.8rem; border-color: #cbd5e1; color: #64748b; text-decoration: none; transition: all 0.2s ease;" onmouseover="this.style.backgroundColor='#f8fafc'; this.style.borderColor='#94a3b8'; this.style.color='#1e293b';" onmouseout="this.style.backgroundColor='transparent'; this.style.borderColor='#cbd5e1'; this.style.color='#64748b';">
+            <i class="fa-solid fa-arrow-left"></i> Voltar para Empresas
+        </a>
+    </div>
     <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mt-2">
       <div>
         <h3 class="text-dark display-font fw-bold mb-1">{{ empresa.nome }}</h3>
         <p class="text-muted small mb-0">
-          {% if empresa.cnpj %}<i class="fa-solid fa-id-card me-1"></i> {{ empresa.cnpj }}{% endif %}
-          {% if empresa.responsavel %} <span class="mx-1">•</span> <i class="fa-solid fa-user-tie me-1"></i> Resp: {{ empresa.responsavel }}{% endif %}
+          {% if empresa.email %}<i class="fa-solid fa-envelope me-1"></i> {{ empresa.email }}{% endif %}
           {% if empresa.telefone %} <span class="mx-1">•</span> <i class="fa-solid fa-phone me-1"></i> {{ empresa.telefone }}{% endif %}
+          {% if empresa.endereco %} <span class="mx-1">•</span> <i class="fa-solid fa-location-arrow me-1"></i> {{ empresa.endereco }}{% endif %}
         </p>
       </div>
       <div>
-        <a href="{% url 'cadastrar_extintor' %}" class="btn btn-signal">
+        <a href="{% url 'cadastrar_extintor' %}" class="btn btn-sm text-white px-3 py-2 fw-semibold shadow-sm d-inline-flex align-items-center gap-2" style="background-color: #059669; border-radius: 8px; font-size: 0.85rem; text-decoration: none; transition: all 0.2s ease;" onmouseover="this.style.backgroundColor='#047857';" onmouseout="this.style.backgroundColor='#059669';">
           <i class="fa-solid fa-plus me-1"></i> Novo Extintor
         </a>
       </div>
@@ -76,14 +78,26 @@
 
   {# Seção de Setores #}
   <div class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-      <h5 class="mb-0 display-font fw-bold text-uppercase text-dark" style="letter-spacing: 0.05em;">
+    <div class="card-header bg-white py-3 d-flex flex-column flex-sm-row justify-content-between align-items-stretch align-items-sm-center gap-3">
+    
+    <!-- Título da Seção -->
+    <h5 class="mb-0 display-font fw-bold text-uppercase text-dark" style="letter-spacing: 0.05em;">
         <i class="fa-solid fa-building-user me-2 text-warning"></i> Setores da Empresa
-      </h5>
-      <button class="btn btn-sm btn-outline-dark" data-bs-toggle="modal" data-bs-target="#modalSetor">
-        <i class="fa-solid fa-plus me-1"></i> Novo Setor
-      </button>
+    </h5>
+
+    <!-- Botão Responsivo -->
+    <div>
+        <button type="button" 
+                class="btn btn-sm text-white px-3 py-2 fw-semibold shadow-sm d-inline-flex align-items-center justify-content-center gap-2 w-100 w-sm-auto" 
+                style="background-color: #059669; border: none; border-radius: 8px; font-size: 0.85rem; transition: all 0.2s ease; white-space: nowrap;" 
+                onmouseover="this.style.backgroundColor='#047857';" 
+                onmouseout="this.style.backgroundColor='#059669';"
+                data-bs-toggle="modal" 
+                data-bs-target="#modalSetor">
+            <i class="fa-solid fa-plus me-1"></i> Novo Setor
+        </button>
     </div>
+  </div>
     <div class="card-body p-0">
       <div class="table-responsive">
         <table class="table table-hover align-middle mb-0">
@@ -246,9 +260,12 @@
 
               <div class="d-flex justify-content-end pt-2 border-top">
                 <button type="button" 
-                        class="btn btn-sm btn-outline-secondary px-3" 
+                        class="btn btn-sm px-3 fw-semibold shadow-sm" 
+                        style="background-color: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; border-radius: 6px; font-size: 0.75rem; transition: all 0.2s ease;" 
+                          onmouseover="this.style.backgroundColor='#d1fae5'; this.style.borderColor='#6ee7b7';" 
+                          onmouseout="this.style.backgroundColor='#ecfdf5'; this.style.borderColor='#a7f3d0';"
                         onclick="abrirModalEdicao('{{ e.pk }}', '{{ e.numero|default:"—" }}', '{{ e.data_vistoria|date:'Y-m-d' }}', '{{ e.situacao }}', '{{ e.data_vencimento|date:'Y-m-d' }}')">
-                  <i class="fa-solid fa-pen-to-square me-1"></i> Atualizar
+                    <i class="fa-solid fa-pen-to-square me-1"></i> Atualizar
                 </button>
               </div>
             </div>
@@ -296,10 +313,13 @@
                 </td>
                 <td class="text-end pe-3">
                   <button type="button" 
-                          class="btn btn-sm btn-outline-secondary px-2 py-1" 
+                          class="btn btn-sm px-2.5 py-1 fw-semibold" 
+                          style="background-color: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; border-radius: 6px; font-size: 0.75rem; transition: all 0.2s ease;" 
+                          onmouseover="this.style.backgroundColor='#d1fae5'; this.style.borderColor='#6ee7b7';" 
+                          onmouseout="this.style.backgroundColor='#ecfdf5'; this.style.borderColor='#a7f3d0';"
                           onclick="abrirModalEdicao('{{ e.pk }}', '{{ e.numero|default:"—" }}', '{{ e.data_vistoria|date:'Y-m-d' }}', '{{ e.situacao }}', '{{ e.data_vencimento|date:'Y-m-d' }}')"
                           title="Atualizar Vistoria">
-                    <i class="fa-solid fa-pen-to-square me-1"></i> Atualizar
+                      <i class="fa-solid fa-pen-to-square me-1"></i> Atualizar
                   </button>
                 </td>
               </tr>
