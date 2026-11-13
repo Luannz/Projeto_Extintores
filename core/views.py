@@ -175,7 +175,7 @@ def detalhe_empresa(request, pk):
     extintores_list = extintores_qs
     if setor_filtro:
         extintores_list = extintores_list.filter(setor_id=setor_filtro)
-    extintores_list = extintores_list.order_by('setor__nome', 'numero')
+    extintores_list = extintores_list.order_by('numero','setor__nome')
 
     extintores = Paginator(extintores_list, 15).get_page(request.GET.get("page"))
 
