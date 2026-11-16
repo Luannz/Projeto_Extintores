@@ -136,14 +136,27 @@
                 </td>
                 <td class="text-end pe-3">
                   <div class="d-flex justify-content-end align-items-center gap-1">
-                    {# Botão de Filtrar #}
-                    <a href="?setor={{ s.pk }}" class="btn btn-sm btn-outline-secondary" title="Filtrar Extintores deste Setor">
-                      <i class="fa-solid fa-filter"></i>
-                    </a>
-                    {# Botão que abre o modal de edição do setor #}
-                    <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalEditarSetor{{ s.pk }}" title="Editar Setor">
-                      <i class="fa-solid fa-pen-to-square"></i>
-                    </button>
+                      {# Botão de Filtrar #}
+                      <a href="?setor={{ s.pk }}" 
+                        class="btn btn-sm p-2 d-inline-flex align-items-center justify-content-center shadow-sm" 
+                        style="background-color: #fff; color: #475569; border: 1px solid #cbd5e1; border-radius: 6px; width: 32px; height: 32px; transition: all 0.2s ease;" 
+                        onmouseover="this.style.backgroundColor='#f8fafc'; this.style.borderColor='#065f46'; this.style.color='#0f172a';" 
+                        onmouseout="this.style.backgroundColor='#fff'; this.style.borderColor='#cbd5e1'; this.style.color='#475569';"
+                        title="Filtrar Extintores deste Setor">
+                          <i class="fa-solid fa-filter" style="font-size: 0.8rem;"></i>
+                      </a>
+
+                      {# Botão que abre o modal de edição do setor #}
+                      <button type="button" 
+                              class="btn btn-sm p-2 d-inline-flex align-items-center justify-content-center shadow-sm" 
+                              style="background-color: #fff; color: #334155; border: 1px solid #cbd5e1; border-radius: 6px; width: 32px; height: 32px; transition: all 0.2s ease;" 
+                              onmouseover="this.style.backgroundColor='#f8fafc'; this.style.borderColor='#065f46'; this.style.color='#0f172a';" 
+                              onmouseout="this.style.backgroundColor='#fff'; this.style.borderColor='#cbd5e1'; this.style.color='#334155';"
+                              data-bs-toggle="modal" 
+                              data-bs-target="#modalEditarSetor{{ s.pk }}" 
+                              title="Editar Setor">
+                          <i class="fa-solid fa-pen-to-square text-primary" style="font-size: 0.8rem;"></i>
+                      </button>
                   </div>
                 </td>
               </tr>
