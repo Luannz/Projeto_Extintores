@@ -261,17 +261,26 @@
 
             <div class="p-3 flex-grow-1">
                 {% for ext in extintores_vencidos %}
-                    <a href="{% url 'inspecao_extintores' %}?vencimento=vencidos" class="alert-item-link extintor-item">
+                    <a href="{% url 'inspecao_extintores' %}?vencimento=vencidos&empresa={{ ext.setor.empresa.pk }}&setor={{ ext.setor.pk }}" class="alert-item-link extintor-item">
                         <div class="d-flex align-items-center gap-2">
                             <div class="rounded-circle bg-danger-subtle text-danger d-flex align-items-center justify-content-center" style="width:38px; height:38px; flex-shrink:0;">
                                 <i class="fas fa-fire-extinguisher fs-6"></i>
                             </div>
                             <div>
-                                <strong class="d-block text-dark small mb-0">
-                                    Extintor Nº {{ ext.numero }} 
-                                    <span class="badge bg-light text-dark border ms-1">{{ ext.tipo|default:"N/A" }}</span>
-                                </strong>
-                                <span class="text-muted fs-7"><i class="fas fa-map-marker-alt me-1 text-danger"></i>Setor: <strong>{{ ext.setor.nome }}</strong></span>
+                                {# Título Principal #}
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <strong class="text-dark fw-bold" style="font-size: 0.9rem;">
+                                        Extintor Nº {{ ext.numero|default:"—" }}
+                                    </strong>
+                                    <span class="badge bg-light text-dark border px-2 py-0.5" style="font-size: 0.7rem;">{{ ext.tipo|default:"N/A" }}</span>
+                                </div>
+                                
+                                {# Informações Secundárias Responsivas (Empresa e Setor) #}
+                                <div class="text-secondary small d-flex flex-column flex-sm-row align-items-sm-center gap-1 gap-sm-2" style="font-size: 0.78rem;">
+                                    <span><i class="fas fa-building me-1 text-muted"></i>{{ ext.setor.empresa.nome }}</span>
+                                    <span class="text-muted d-none d-sm-inline">•</span>
+                                    <span><i class="fas fa-map-marker-alt me-1 text-muted"></i>Setor: {{ ext.setor.nome }}</span>
+                                </div>
                             </div>
                         </div>
                         <div class="text-end">
@@ -310,17 +319,26 @@
 
             <div class="p-3 flex-grow-1">
                 {% for ext in extintores_alerta %}
-                    <a href="{% url 'inspecao_extintores' %}?vencimento=30" class="alert-item-link extintor-item">
+                    <a href="{% url 'inspecao_extintores' %}?vencimento=30&empresa={{ ext.setor.empresa.pk }}&setor={{ ext.setor.pk }}" class="alert-item-link extintor-item">
                         <div class="d-flex align-items-center gap-2">
                             <div class="rounded-circle bg-warning-subtle text-warning-emphasis d-flex align-items-center justify-content-center" style="width:38px; height:38px; flex-shrink:0;">
                                 <i class="fas fa-exclamation-triangle fs-6"></i>
                             </div>
                             <div>
-                                <strong class="d-block text-dark small mb-0">
-                                    Extintor Nº {{ ext.numero }} 
-                                    <span class="badge bg-light text-dark border ms-1">{{ ext.tipo|default:"N/A" }}</span>
-                                </strong>
-                                <span class="text-muted fs-7"><i class="fas fa-map-marker-alt me-1 text-warning-emphasis"></i>Setor: <strong>{{ ext.setor.nome }}</strong></span>
+                                {# Título Principal #}
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <strong class="text-dark fw-bold" style="font-size: 0.9rem;">
+                                        Extintor Nº {{ ext.numero|default:"—" }}
+                                    </strong>
+                                    <span class="badge bg-light text-dark border px-2 py-0.5" style="font-size: 0.7rem;">{{ ext.tipo|default:"N/A" }}</span>
+                                </div>
+                                
+                                {# Informações Secundárias Responsivas (Empresa e Setor) #}
+                                <div class="text-secondary small d-flex flex-column flex-sm-row align-items-sm-center gap-1 gap-sm-2" style="font-size: 0.78rem;">
+                                    <span><i class="fas fa-building me-1 text-muted"></i>{{ ext.setor.empresa.nome }}</span>
+                                    <span class="text-muted d-none d-sm-inline">•</span>
+                                    <span><i class="fas fa-map-marker-alt me-1 text-muted"></i>Setor: {{ ext.setor.nome }}</span>
+                                </div>
                             </div>
                         </div>
                         <div class="text-end">
