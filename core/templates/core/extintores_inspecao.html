@@ -381,41 +381,46 @@
 
     {# ===== PAGINAÇÃO ===== #}
     {% if extintores.has_other_pages %}
-      <div class="card-footer bg-white border-top d-flex flex-column flex-sm-row justify-content-between align-items-center gap-2 py-3 px-4">
-        <small class="mono text-muted" style="font-size: 0.75rem;">
-          EXIBINDO {{ extintores.start_index }}-{{ extintores.end_index }} DE {{ extintores.paginator.count }}
-        </small>
+        <div class="card-footer bg-white border-top d-flex flex-column flex-sm-row justify-content-between align-items-center gap-2 py-3 px-4">
+            <small class="mono text-muted" style="font-size: 0.75rem;">
+            EXIBINDO {{ extintores.start_index }}-{{ extintores.end_index }} DE {{ extintores.paginator.count }}
+            </small>
 
-        <ul class="pagination pagination-sm mb-0">
-          {% if extintores.has_previous %}
-            <li class="page-item">
-              <a class="page-link text-dark" href="?page={{ extintores.previous_page_number }}{% if setor_atual %}&setor={{ setor_atual }}{% endif %}{% if situacao_atual %}&situacao={{ situacao_atual }}{% endif %}{% if vencimento_atual %}&vencimento={{ vencimento_atual }}{% endif %}{% if vistoria_atual %}&vistoria={{ vistoria_atual }}{% endif %}{% if ordem_atual %}&ordem={{ ordem_atual }}{% endif %}">Anterior</a>
-            </li>
-          {% else %}
-            <li class="page-item disabled"><span class="page-link">Anterior</span></li>
-          {% endif %}
-
-          {% for num in extintores.paginator.page_range %}
-            {% if extintores.number == num %}
-              <li class="page-item active">
-                <span class="page-link" style="background: var(--amber-500); border-color: var(--amber-500); color: var(--graphite-950); font-weight: bold;">{{ num }}</span>
-              </li>
-            {% elif num > extintores.number|add:'-3' and num < extintores.number|add:'3' %}
-              <li class="page-item">
-                <a class="page-link text-dark" href="?page={{ num }}{% if setor_atual %}&setor={{ setor_atual }}{% endif %}{% if situacao_atual %}&situacao={{ situacao_atual }}{% endif %}{% if vencimento_atual %}&vencimento={{ vencimento_atual }}{% endif %}{% if vistoria_atual %}&vistoria={{ vistoria_atual }}{% endif %}{% if ordem_atual %}&ordem={{ ordem_atual }}{% endif %}">{{ num }}</a>
-              </li>
+            <ul class="pagination pagination-sm mb-0">
+            
+            {# Botão Anterior #}
+            {% if extintores.has_previous %}
+                <li class="page-item">
+                <a class="page-link text-dark" href="?page={{ extintores.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Anterior</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">Anterior</span></li>
             {% endif %}
-          {% endfor %}
 
-          {% if extintores.has_next %}
-            <li class="page-item">
-              <a class="page-link text-dark" href="?page={{ extintores.next_page_number }}{% if setor_atual %}&setor={{ setor_atual }}{% endif %}{% if situacao_atual %}&situacao={{ situacao_atual }}{% endif %}{% if vencimento_atual %}&vencimento={{ vencimento_atual }}{% endif %}{% if vistoria_atual %}&vistoria={{ vistoria_atual }}{% endif %}{% if ordem_atual %}&ordem={{ ordem_atual }}{% endif %}">Próximo</a>
-            </li>
-          {% else %}
-            <li class="page-item disabled"><span class="page-link">Próximo</span></li>
-          {% endif %}
-        </ul>
-      </div>
+            {# Números das Páginas #}
+            {% for num in extintores.paginator.page_range %}
+                {% if extintores.number == num %}
+                <li class="page-item active">
+                    <span class="page-link" style="background: var(--amber-500); border-color: var(--amber-500); color: var(--graphite-950); font-weight: bold; border-radius: 6px;">{{ num }}</span>
+                </li>
+                {% elif num > extintores.number|add:'-3' and num < extintores.number|add:'3' %}
+                <li class="page-item">
+                    <a class="page-link text-dark" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                </li>
+                {% endif %}
+            {% endfor %}
+
+            {# Botão Próximo #}
+            {% if extintores.has_next %}
+                <li class="page-item">
+                <a class="page-link text-dark" href="?page={{ extintores.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Próximo</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">Próximo</span></li>
+            {% endif %}
+
+            </ul>
+        </div>
     {% endif %}
 </div>
 
