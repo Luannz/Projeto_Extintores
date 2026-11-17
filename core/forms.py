@@ -11,23 +11,10 @@ class MultipleFileInput(ClearableFileInput):
 
 class RegistroUsuarioForm(UserCreationForm):
 
-    setor = forms.ModelChoiceField(
-        queryset=Setor.objects.filter(ativo=True),
-        label="Setor",
-        required=False,
-        empty_label="Selecione um setor...",
-        widget=forms.Select(
-            attrs={
-                "class": "form-select text-muted",
-            }
-        ),
-    )
-
     class Meta:
         model = Usuario
         fields = [
             "username",
-            "setor",
             "password1",
             "password2",
         ]
@@ -68,8 +55,6 @@ class RegistroUsuarioForm(UserCreationForm):
 
     def save(self, commit=True):
         user = super().save(commit=False)
-        # Associa a instância do setor (ou None se estiver em branco)
-        user.setor = self.cleaned_data.get("setor")
         if commit:
             user.save()
         return user

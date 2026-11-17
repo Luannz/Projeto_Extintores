@@ -69,15 +69,6 @@ class Usuario(AbstractUser):
         },
     )
 
-    setor = models.ForeignKey(
-        Setor,  # Usando a classe diretamente
-        on_delete=models.PROTECT,
-        related_name="usuarios",
-        verbose_name="Setor",
-        null=True,
-        blank=True,
-    )
-
     def __str__(self):
         return self.get_full_name() or self.username
 
