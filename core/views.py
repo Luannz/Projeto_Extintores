@@ -196,6 +196,21 @@ def detalhe_empresa(request, pk):
         "total_em_dia": total_extintores - total_vencidos - total_a_vencer,
     })
 
+@login_required
+def excluir_empresa(request, pk):
+    empresa = get_object_or_404(Empresa, pk=pk)
+    
+    # Verifica se existem setores vinculados a esta empresa
+    tem_setores = empresa.setores.exists() # Usando o related_name 'setores'
+    
+    if tem_setores:
+        messages.error(request, f'Não é possível excluir a empresa "{empresa.nome}" pois ela possui setores e/ou extintores cadastrados.')
+    else:
+        nome_empresa = empresa.nome
+        empresa.delete()
+        messages.success(request, f'Empresa "{nome_empresa}" excluída com sucesso!')
+        
+    return redirect("listar_empresas")
 
 
 

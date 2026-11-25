@@ -13,6 +13,7 @@ urlpatterns = [
     # == EMPRESAS ==
     path('empresas/', views.listar_empresas, name='listar_empresas'),
     path('empresas/<int:pk>/', views.detalhe_empresa, name='detalhe_empresa'),
+    path('empresas/excluir/<int:pk>/', views.excluir_empresa, name='excluir_empresa'),
 
     # == SETORES ==
     path('setores/', views.listar_setores, name='listar_setores'),

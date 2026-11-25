@@ -125,6 +125,28 @@
         list-style: none;
         padding-left: 0;
     }
+    /* Bloco combinado de Carga e Tipo */
+    .badge-combined {
+        display: inline-flex;
+        align-items: center;
+        border: 1px solid var(--card-border, #e2e8f0);
+        border-radius: 50rem;
+        background-color: #f8fafc;
+        overflow: hidden;
+        font-size: 0.78rem;
+    }
+    .badge-combined .carga-part {
+        background-color: #ffffff;
+        font-weight: 700;
+        color: #0f172a;
+        padding: 0.25rem 0.65rem;
+        border-right: 1px solid #e2e8f0;
+    }
+    .badge-combined .tipo-part {
+        padding: 0.25rem 0.65rem;
+        color: #475569;
+        font-weight: 600;
+    }
 </style>
 {% endblock %}
 
@@ -140,7 +162,8 @@
             <p class="text-muted small m-0 mt-1">Gerencie a estrutura organizacional e acompanhe extintores por empresa</p>
         </div>
         <div>
-            <button class="btn-sst-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#modalEmpresa">
+            <!-- Botão com onclick para limpar o modal ao cadastrar nova -->
+            <button class="btn-sst-primary shadow-sm" onclick="abrirModalNovaEmpresa()" data-bs-toggle="modal" data-bs-target="#modalEmpresa">
                 <i class="fa-solid fa-plus"></i> Nova Empresa
             </button>
         </div>
@@ -177,10 +200,10 @@
         {% for e in empresas %}
             <div class="empresa-card p-3 mb-3 shadow-sm">
                 <div class="d-flex justify-content-between align-items-start mb-2 pb-2 border-bottom">
-                    <div>
-                        <span class="fw-bold text-dark fs-6">{{ e.nome }}</span>
+                    <div class="badge-combined">
+                        <span class="carga-part">{{ e.nome }}</span>
                         {% if not e.ativo %}
-                            <span class="badge bg-secondary small ms-1">Inativa</span>
+                            <span class="tipo-part bg-secondary text-white">Inativa</span>
                         {% endif %}
                     </div>
                     {% if e.total_vencidos and e.total_vencidos > 0 %}
@@ -231,17 +254,21 @@
                         <th class="text-center">Setores</th>
                         <th class="text-center">Extintores</th>
                         <th class="text-center">Vencidos</th>
-                        <th class="text-end pe-4">Ações</th>
+                        <th class="text-center pe-4">Ações</th>
                     </tr>
                 </thead>
                 <tbody class="border-top-0">
                     {% for e in empresas %}
                         <tr>
                             <td class="ps-4">
-                                <div class="fw-bold text-dark fs-6">{{ e.nome }}</div>
-                                {% if not e.ativo %}
-                                    <span class="badge bg-secondary small">Inativa</span>
-                                {% endif %}
+                                <div class="badge-combined">
+                                    <span class="carga-part">{{ e.nome }}</span>
+                                    {% if not e.ativo %}
+                                        <span class="tipo-part bg-secondary text-white">Inativa</span>
+                                    {% else %}
+                                        <span class="tipo-part text-success">Ativa</span>
+                                    {% endif %}
+                                </div>
                             </td>
                             <td class="text-center">
                                 <span class="badge badge-status badge-neutro">{{ e.total_setores|default:0 }}</span>
@@ -260,10 +287,24 @@
                                     </span>
                                 {% endif %}
                             </td>
-                            <td class="text-end pe-4">
-                                <a href="{% url 'detalhe_empresa' e.pk %}" class="btn btn-sm btn-light border px-3 fw-semibold text-secondary shadow-sm" style="border-radius: 8px; transition: all 0.2s ease;" onmouseover="this.style.backgroundColor='#f1f5f9'; this.style.color='#0f172a';" onmouseout="this.style.backgroundColor='#fff'; this.style.color='#64748b';">
-                                    <i class="fa-solid fa-folder-open me-1 text-warning"></i> Abrir
-                                </a>
+                            <td class="text-center pe-4">
+                                <div class="d-flex justify-content-center align-items-center gap-2">
+                                    {# Botão Abrir #}
+                                    <a href="{% url 'detalhe_empresa' e.pk %}" class="btn btn-sm btn-light border px-3 fw-semibold text-secondary shadow-sm" style="border-radius: 8px; transition: all 0.2s ease;" onmouseover="this.style.backgroundColor='#f1f5f9'; this.style.color='#0f172a';" onmouseout="this.style.backgroundColor='#fff'; this.style.color='#64748b';">
+                                        <i class="fa-solid fa-folder-open me-1 text-warning"></i> Abrir
+                                    </a>
+
+                                    {# Botão Editar (Aciona a função JS para preencher o modal) #}
+                                    <button type="button" class="btn btn-sm btn-light border px-3 fw-semibold text-secondary shadow-sm" style="border-radius: 8px; transition: all 0.2s ease;"
+                                            onclick="abrirModalEdicaoEmpresa('{{ e.pk }}', '{{ e.nome|escapejs }}', '{{ e.telefone|default:''|escapejs }}', '{{ e.email|default:''|escapejs }}', '{{ e.endereco|default:''|escapejs }}', {{ e.ativo|yesno:'true,false' }})">
+                                        <i class="fa-solid fa-pen me-1 text-warning"></i> Editar
+                                    </button>
+
+                                    {# Botão Excluir (Com verificação se tem vínculos) #}
+                                    <a href="{% url 'excluir_empresa' e.pk %}" class="btn btn-sm btn-light border px-2 fw-semibold text-danger shadow-sm" style="border-radius: 8px;" title="Excluir Empresa" onclick="return confirm('Deseja realmente excluir a empresa {{ e.nome }}?');">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </a>
+                                </div>
                             </td>
                         </tr>
                     {% empty %}
@@ -283,18 +324,23 @@
         </div>
     </div>
 
-    {# Modal de Cadastro de Nova Empresa #}
+    {# Modal de Cadastro / Edição de Empresa #}
     <div class="modal fade" id="modalEmpresa" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg" style="border-radius: 14px; overflow: hidden;">
                 <div class="modal-header border-0 text-white" style="background: linear-gradient(180deg, var(--sidebar-bg-start, #064e3b) 0%, var(--sidebar-bg-end, #022c22) 100%);">
-                    <h5 class="modal-title fw-bold fs-6">
+                    <!-- ID adicionado para o título mudar via JS -->
+                    <h5 class="modal-title fw-bold fs-6" id="modalEmpresaTitulo">
                         <i class="fa-solid fa-building me-2 text-success"></i>Cadastrar Nova Empresa
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <form method="post">
                     {% csrf_token %}
+                    
+                    {# Input oculto essencial para a view saber se está editando #}
+                    <input type="hidden" name="empresa_id" id="id_empresa_id" value="">
+
                     <div class="modal-body p-4 empresa-form-body">
                         {% if form.non_field_errors %}
                             <div class="alert alert-danger py-2 small">
@@ -316,4 +362,59 @@
     </div>
 
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Limpa os campos ao criar uma nova empresa e garante que "Ativo" venha marcado
+function abrirModalNovaEmpresa() {
+    const modalEl = document.getElementById('modalEmpresa');
+    if (modalEl) {
+        document.getElementById('id_empresa_id').value = '';
+        document.getElementById('modalEmpresaTitulo').innerHTML = '<i class="fa-solid fa-building me-2 text-success"></i>Cadastrar Nova Empresa';
+        
+        // Limpa os campos de texto/email/telefone/endereço
+        const inputs = modalEl.querySelectorAll('input:not([type="checkbox"]):not([type="hidden"]):not([name="csrfmiddlewaretoken"]), select, textarea');
+        inputs.forEach(input => {
+            input.value = '';
+        });
+
+        // Garante explicitamente que o checkbox "ativo" fique marcado por padrão
+        const checkboxAtivo = modalEl.querySelector('input[name="ativo"]');
+        if (checkboxAtivo) {
+            checkboxAtivo.checked = true;
+        }
+    }
+}
+
+// Preenche AUTOMATICAMENTE todos os campos ao clicar em Editar (incluindo o checkbox Ativo)
+function abrirModalEdicaoEmpresa(id, nome, telefone, email, endereco, ativo) {
+    const modalEl = document.getElementById('modalEmpresa');
+    if (modalEl) {
+        document.getElementById('id_empresa_id').value = id;
+        document.getElementById('modalEmpresaTitulo').innerHTML = '<i class="fa-solid fa-pen-to-square me-2 text-warning"></i>Editar Empresa';
+        
+        const inputNome = modalEl.querySelector('input[name="nome"]');
+        if (inputNome) inputNome.value = nome;
+
+        const inputTelefone = modalEl.querySelector('input[name="telefone"]');
+        if (inputTelefone) inputTelefone.value = telefone;
+
+        const inputEmail = modalEl.querySelector('input[name="email"]');
+        if (inputEmail) inputEmail.value = email;
+
+        const inputEndereco = modalEl.querySelector('input[name="endereco"]');
+        if (inputEndereco) inputEndereco.value = endereco;
+
+        // Define o estado exato do checkbox "ativo" conforme cadastrado no banco
+        const checkboxAtivo = modalEl.querySelector('input[name="ativo"]');
+        if (checkboxAtivo) {
+            checkboxAtivo.checked = ativo;
+        }
+
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+    }
+}
+</script>
 {% endblock %}
